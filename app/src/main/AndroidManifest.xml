@@ -1,6 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <!-- Request legacy Bluetooth permissions on older devices. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+<!--    <uses-permission-->
+<!--        android:name="android.permission.BLUETOOTH_ADMIN"-->
+<!--        android:maxSdkVersion="30" />-->
+
+<!--    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" -->
+<!--        android:maxSdkVersion="30" />-->
+    <!--
+ Needed only if your app looks for Bluetooth devices.
+         If your app doesn't use Bluetooth scan results to derive physical
+         location information, you can
+         <a href="#assert-never-for-location">strongly assert that your app
+         doesn't derive physical location</a>.
+    -->
+
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/> <!-- Needed only if your app makes the device discoverable to Bluetooth devices. -->
+     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+    <!-- Needed only if your app communicates with already-paired Bluetooth devices. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- Needed only if your app uses Bluetooth scan results to derive physical location. -->
+<!--    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />-->
+<!--    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />-->
+
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -13,10 +46,17 @@
         android:theme="@style/Theme.ToyCarBluetoothApp"
         tools:targetApi="31">
         <activity
+            android:name=".ListBluetoothDevices"
+            android:exported="false"
+            android:label="@string/title_activity_list_bluetooth_devices"
+            android:theme="@style/Theme.ToyCarBluetoothApp"
+            android:parentActivityName=".MainActivity"
+            />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.ToyCarBluetoothApp.NoActionBar">
+            android:theme="@style/Theme.ToyCarBluetoothApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

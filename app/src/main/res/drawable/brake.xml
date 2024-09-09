@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<!--<set xmlns:android="http://schemas.android.com/apk/res/android">-->
+<!--<rotate-->
+<!--    android:fromDegrees="0"-->
+<!--    android:toDegrees="360"-->
+<!--    android:pivotX="50%"-->
+<!--    android:pivotY="50%"-->
+<!--    android:duration="1000"/>-->
+<!--<bitmap android:src="@android:drawable/ic_media_ff"/>-->
+<!--</set>-->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+<item android:state_pressed="false" >
+    <rotate  android:fromDegrees="0" android:toDegrees="270" android:duration="0">
+        <bitmap android:src="@android:drawable/ic_media_play"/>
+    </rotate>
+</item>
+<item android:state_pressed="true" >
+    <rotate  android:fromDegrees="0" android:toDegrees="270" android:duration="0">
+        <bitmap android:src="@android:drawable/ic_media_play"/>
+    </rotate>
+</item>
+<item >
+    <rotate  android:fromDegrees="0" android:toDegrees="270" android:duration="0">
+        <bitmap android:src="@android:drawable/ic_media_play"/>
+    </rotate>
+</item>
+</selector>

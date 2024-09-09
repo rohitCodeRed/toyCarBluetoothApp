@@ -2,12 +2,45 @@
     <string name="app_name">Toy Car Bluetooth App</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
+    <string name="nav_header_title">Toy Car</string>
+    <string name="nav_header_subtitle">Classic and BLE Device Connection</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+    <string name="action_enablePerm"> BL Permission</string>
+    <string name="action_enableBl">BT Enable</string>
+    <string name="action_ConnDev">Connect</string>
+    <string name="action_blActivity">Select Device</string>
+    <string name="action_startDisc">Restart Scanning </string>
 
-    <string name="menu_home">Home</string>
-    <string name="menu_gallery">Gallery</string>
-    <string name="menu_slideshow">Slideshow</string>
+
+    <string name="menu_control">Car Control</string>
+    <string name="menu_connect">Connect Device</string>
+    <string name="menu_device_info">Device Info</string>
+
+    <string name="r_btn_fullSpeed">&#160;100%&#160;</string>
+    <string name="r_btn_zeroSpeed">&#160;0%&#160;</string>
+    <string name="r_btn_obstacle">&#160;Obstacle&#160;</string>
+
+    <string name="btn_switch">&#160;Connection&#160;</string>
+    <string name="title_activity_list_bluetooth_devices">Bluetooth Devices</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="device_name">POCO F1 XX</string>
+    <string name="mac_addr">812:xedsf::876:1:58h</string>
+    <string name="conn_btn">Connect</string>
+
+    <string name="conn">Connected</string>
+    <string name="dis_conn">Disconnected</string>
+
+    <string name="text_M1">Motor 1</string>
+    <string name="text_M2">Motor 2</string>
+    <string name="text_unit">Motor RPM: XX</string>
+    <string name="text_rpm_value">00 : 00</string>
+    <string name="text_deviceName">Device: XX</string>
+    <string name="text_deviceAddr">Addr: YY</string>
+
 </resources>

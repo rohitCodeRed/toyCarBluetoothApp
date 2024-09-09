@@ -3,23 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/mobile_navigation"
-    app:startDestination="@+id/nav_home">
+    app:startDestination="@+id/nav_control">
 
     <fragment
-        android:id="@+id/nav_home"
-        android:name="com.example.toycarbluetoothapp.ui.home.HomeFragment"
-        android:label="@string/menu_home"
-        tools:layout="@layout/fragment_home" />
+        android:id="@+id/nav_control"
+        android:name="com.example.toycarbluetoothapp.ui.control.ControlFragment"
+        android:label="@string/menu_control"
+        tools:layout="@layout/fragment_control" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.example.toycarbluetoothapp.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:id="@+id/nav_connect"
+        android:name="com.example.toycarbluetoothapp.ui.connect.ConnectFragment"
+        android:label="@string/menu_connect"
+        tools:layout="@layout/fragment_connect" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.example.toycarbluetoothapp.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        android:id="@+id/nav_device_info"
+        android:name="com.example.toycarbluetoothapp.ui.deviceinfo.DeviceInfoFragment"
+        android:label="@string/menu_device_info"
+        tools:layout="@layout/fragment_device_info" />
 </navigation>
