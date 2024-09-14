@@ -1,6 +1,5 @@
 package com.example.toycarbluetoothapp
 
-import android.app.Dialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.os.Bundle
@@ -16,21 +15,19 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
-import androidx.fragment.app.DialogFragment
-import com.example.toycarbluetoothapp.bluetooth.BluetoothConnectAsClientSocketThread
-import com.example.toycarbluetoothapp.bluetooth.BluetoothDeviceServices
-import com.example.toycarbluetoothapp.bluetooth.Constants
-import com.example.toycarbluetoothapp.bluetooth.SampleDeviceInfo
-import com.example.toycarbluetoothapp.databinding.ActivityListBluetoothDevicesBinding
+import com.example.toycarbluetoothapp.bluetooth.BlClassicConnectAsClientSocketThread
+import com.example.toycarbluetoothapp.bluetooth.BlClassicDeviceServices
+import com.example.toycarbluetoothapp.bluetooth.BlClassicDeviceInfo
+import com.example.toycarbluetoothapp.databinding.ActivityClassicDeviceListBinding
 import java.util.UUID
 
 
-class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
-    private lateinit var binding: ActivityListBluetoothDevicesBinding
-    private lateinit var deviceData:MutableList<SampleDeviceInfo>
+class BlClassicDevicesListActivity : AppCompatActivity(), View.OnClickListener {
+    private lateinit var binding: ActivityClassicDeviceListBinding
+    private lateinit var deviceData:MutableList<BlClassicDeviceInfo>
     private lateinit var pLinearLayout:LinearLayout
     private  var bluetoothAdapter: BluetoothAdapter? = null
-    private var  socketCreationClass: BluetoothConnectAsClientSocketThread? = null
+    private var  socketCreationClass: BlClassicConnectAsClientSocketThread? = null
 
     private var pHandler: Handler = Handler(Looper.myLooper()!!){
         when(it.what){
@@ -94,7 +91,7 @@ class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityListBluetoothDevicesBinding.inflate(layoutInflater)
+        binding = ActivityClassicDeviceListBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setSupportActionBar(binding.deviceToolbar)
@@ -115,13 +112,13 @@ class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
 
 
     private fun initHandler() {
-        BluetoothDeviceServices.setActivityHandler(pHandler)
+        BlClassicDeviceServices.setActivityHandler(pHandler)
     }
 
 
     private fun initBlAndSocket(){
-        socketCreationClass = BluetoothDeviceServices.getSocketCreateClass()
-        bluetoothAdapter = BluetoothDeviceServices.getBluetoothAdapter()
+        socketCreationClass = BlClassicDeviceServices.getSocketCreateClass()
+        bluetoothAdapter = BlClassicDeviceServices.getBluetoothAdapter()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -137,9 +134,9 @@ class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
             R.id.action_startDisc ->{
                 startDeviceDiscovery()
             }
-            android.R.id.home->{
-                finish()
-            }
+//            android.R.id.home->{
+//                finish()
+//            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -150,10 +147,10 @@ class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
             val name = v.findViewById<TextView>(R.id.device_name).text
             val mac_addr = v.findViewById<TextView>(R.id.mac_addr).text
             println("card view click in condition ${mac_addr}")
-            val device = BluetoothDeviceServices.getDeviceByAddress(mac_addr.toString())
+            val device = BlClassicDeviceServices.getDeviceByAddress(mac_addr.toString())
 
                 if(device!= null){
-                   if(BluetoothDeviceServices.checkDeviceIsConnected(device) == true){
+                   if(BlClassicDeviceServices.checkDeviceIsConnected(device) == true){
                        showDialogForSocketDisConnect("Device Connection", "Do you want to close it ...?")
                    }
                    else{
@@ -169,18 +166,18 @@ class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
 
     private fun startDeviceDiscovery() {
 
-        if(!BluetoothDeviceServices.getPermission()){
+        if(!BlClassicDeviceServices.getPermission()){
             Toast.makeText(this, "Please, Enable the Permission from top right Action menu.", Toast.LENGTH_SHORT).show();
             return
         }
 
-        if(!BluetoothDeviceServices.getBluetoothEnStatus()){
+        if(!BlClassicDeviceServices.getBluetoothEnStatus()){
             Toast.makeText(this, "Please, Turn on the Bluetooth from top right Action menu.", Toast.LENGTH_SHORT).show();
             return
         }
 
-        BluetoothDeviceServices.clearAllAvailableDevices()
-        BluetoothDeviceServices.scanBluetoothPairedDevice()
+        BlClassicDeviceServices.clearAllAvailableDevices()
+        BlClassicDeviceServices.scanBluetoothPairedDevice()
 
      if(bluetoothAdapter != null){
          if(bluetoothAdapter!!.isDiscovering){
@@ -207,19 +204,19 @@ class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
     }
 
 
-    private fun createSampleData():MutableList<SampleDeviceInfo>{
+    private fun createSampleData():MutableList<BlClassicDeviceInfo>{
 
-        val tempList:MutableList<SampleDeviceInfo> = mutableListOf()
-        tempList.add(SampleDeviceInfo("POCO f1 XX","56:gujucxb:8097bibecbbc:00"))
-        tempList.add(SampleDeviceInfo("POCO f2 XX","56:gujucxb:8097bibecbbc:01",false))
-        tempList.add(SampleDeviceInfo("POCO k4 XX","56:gujucxb:8097bibecbbc:02",false))
-        tempList.add(SampleDeviceInfo("POCO s1 XX","56:gujucxb:8097bibecbbc:03",false))
+        val tempList:MutableList<BlClassicDeviceInfo> = mutableListOf()
+        tempList.add(BlClassicDeviceInfo("POCO f1 XX","56:gujucxb:8097bibecbbc:00"))
+        tempList.add(BlClassicDeviceInfo("POCO f2 XX","56:gujucxb:8097bibecbbc:01",false))
+        tempList.add(BlClassicDeviceInfo("POCO k4 XX","56:gujucxb:8097bibecbbc:02",false))
+        tempList.add(BlClassicDeviceInfo("POCO s1 XX","56:gujucxb:8097bibecbbc:03",false))
 
         return tempList
     }
 
 
-    private fun updateCardView(devInfo:SampleDeviceInfo): CardView{
+    private fun updateCardView(devInfo:BlClassicDeviceInfo): CardView{
         val inflatedView:View = layoutInflater.inflate(R.layout.card_device,null)
         val pCardView:CardView = inflatedView.findViewById(R.id.device_card_view)
 
@@ -257,14 +254,14 @@ class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
 
     private fun updateLayoutWithRealData(){
         pLinearLayout.removeAllViews()
-        val devData = BluetoothDeviceServices.getAllAvailableDevice()
+        val devData = BlClassicDeviceServices.getAllAvailableDevice()
         devData.forEach {
             pLinearLayout.addView(updateCardView(it))
         }
     }
 
     private fun updateLayoutWithRealDataOneByOne(){
-        var devData = BluetoothDeviceServices.getAllAvailableDevice()
+        var devData = BlClassicDeviceServices.getAllAvailableDevice()
         if(pLinearLayout.childCount < devData.count()){
             devData = devData.subList(pLinearLayout.childCount,devData.count())
         }
@@ -297,10 +294,10 @@ class ListBluetoothDevices : AppCompatActivity(), View.OnClickListener {
 
     private fun disconnectAsClient() {
 
-        if (BluetoothDeviceServices.getClientSocket() != null) {
+        if (BlClassicDeviceServices.getClientSocket() != null) {
             socketCreationClass?.cancelThread()
         }
-        BluetoothDeviceServices.disconnectClientSocket()
+        BlClassicDeviceServices.disconnectClientSocket()
 
     }
 

@@ -1,10 +1,9 @@
 package com.example.toycarbluetoothapp.bluetooth
 
 import android.bluetooth.BluetoothSocket
-import android.os.Bundle
 import android.os.Handler
-import android.os.Message
 import android.util.Log
+import com.example.toycarbluetoothapp.Constants
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -34,7 +33,7 @@ class BluetoothDataTransferThread () {
     }
 
     fun sendCommand(s:String){
-        if(thread!!.isAlive && BluetoothDeviceServices.isSocketConnect()){
+        if(thread!!.isAlive && BlClassicDeviceServices.isSocketConnect()){
             thread!!.write(s.toByteArray())
 
         }

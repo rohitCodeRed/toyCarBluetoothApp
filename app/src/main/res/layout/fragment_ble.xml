@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.ble.BleFragment">
+
+    <TextView
+        android:id="@+id/ble_m1_m2_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="100:100"
+        android:textAlignment="center"
+        android:textSize="56sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.211" />
+
+    <SeekBar
+        android:id="@+id/ble_acc_deAcc"
+        android:layout_width="160dp"
+        android:layout_height="300dp"
+        android:layout_gravity="start"
+        android:layout_marginBottom="8dp"
+        android:rotation="270"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/action_ble_front_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:src="@android:drawable/arrow_up_float"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.816"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.601" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/action_ble_back_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:src="@android:drawable/arrow_down_float"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.816"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.863" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/action_ble_right_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:clickable="true"
+        android:src="@android:drawable/ic_media_next"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/action_ble_left_btn"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.728" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/action_ble_left_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:src="@android:drawable/ic_media_previous"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.633"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.728" />
+
+    <ImageButton
+        android:id="@+id/ble_startBtn"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/round_stop_btn"
+        android:src="@drawable/state_stop_img"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/ble_m3_m4_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="100:100"
+        android:textSize="56sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ble_m1_m2_value"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/ble_tl_motor_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Motor 1"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/ble_m1_m2_value"
+        app:layout_constraintStart_toStartOf="@+id/ble_m1_m2_value" />
+
+    <TextView
+        android:id="@+id/ble_bl_motor_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Motor 4"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@+id/ble_m3_m4_value"
+        app:layout_constraintTop_toBottomOf="@+id/ble_m3_m4_value" />
+
+    <TextView
+        android:id="@+id/ble_tr_motor_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Motor 2"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/ble_m1_m2_value"
+        app:layout_constraintEnd_toEndOf="@+id/ble_m1_m2_value" />
+
+    <TextView
+        android:id="@+id/ble_br_motor_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Motor 3"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@+id/ble_m3_m4_value"
+        app:layout_constraintTop_toBottomOf="@+id/ble_m3_m4_value" />
+
+    <TextView
+        android:id="@+id/ble_deviceName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Device: XX"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/ble_Addr"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:text="Addr: YY"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ble_deviceName" />
+
+    <RadioButton
+        android:id="@+id/ble_alert"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:text="Alert"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

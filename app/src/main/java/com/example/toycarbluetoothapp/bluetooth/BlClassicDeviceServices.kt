@@ -8,21 +8,22 @@ import android.os.Bundle
 import android.os.Handler
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat.startActivityForResult
+import com.example.toycarbluetoothapp.Constants
 
-object BluetoothDeviceServices {
+object BlClassicDeviceServices {
     private var bluetoothAdapter:BluetoothAdapter? = null
     private var isDiscoveryStarted:Boolean = false
     private var isBluetoothEnable:Boolean = false
     private var isClientDevConn:Boolean = false
     private var isPermissionGranted:Boolean = false
-    var connDeviceInfo:SampleDeviceInfo? = null
-    private val pairedDeviceList:MutableList<SampleDeviceInfo> = mutableListOf()
-    private var allAvailableDevices:MutableList<SampleDeviceInfo> = mutableListOf()
+    var connDeviceInfo:BlClassicDeviceInfo? = null
+    private val pairedDeviceList:MutableList<BlClassicDeviceInfo> = mutableListOf()
+    private var allAvailableDevices:MutableList<BlClassicDeviceInfo> = mutableListOf()
     private var bluetoothClientSocket:BluetoothSocket? = null
     private var bluetoothServerSocket:BluetoothSocket? = null
     private  var activityHandler:Handler? = null
 
-    private var socketCreationClass:BluetoothConnectAsClientSocketThread? = null
+    private var socketCreationClass:BlClassicConnectAsClientSocketThread? = null
 
 
 
@@ -33,17 +34,17 @@ object BluetoothDeviceServices {
     fun setActionDiscovery(s:Boolean){
         isDiscoveryStarted = s
         if(s){
-            activityHandler?.obtainMessage(Constants.DISCOVERY_MODE,Constants.START)!!.sendToTarget()
+            activityHandler?.obtainMessage(Constants.DISCOVERY_MODE, Constants.START)!!.sendToTarget()
         }
         else{
-            activityHandler?.obtainMessage(Constants.DISCOVERY_MODE,Constants.END)!!.sendToTarget()
+            activityHandler?.obtainMessage(Constants.DISCOVERY_MODE, Constants.END)!!.sendToTarget()
         }
     }
-    fun setSocketCreateClass(s:BluetoothConnectAsClientSocketThread?){
+    fun setSocketCreateClass(s:BlClassicConnectAsClientSocketThread?){
         socketCreationClass = s
     }
 
-    fun getSocketCreateClass():BluetoothConnectAsClientSocketThread?{
+    fun getSocketCreateClass():BlClassicConnectAsClientSocketThread?{
        return socketCreationClass
     }
 
@@ -60,17 +61,17 @@ object BluetoothDeviceServices {
 
             if(!checkDeviceIsAlreadyPresent(deviceHardwareAddress)){
                 if(checkDeviceIsConnected(device) == true){
-                    allAvailableDevices.add(SampleDeviceInfo(deviceName,deviceHardwareAddress,true,true,device))
+                    allAvailableDevices.add(BlClassicDeviceInfo(deviceName,deviceHardwareAddress,true,true,device))
                 }
                 else{
-                    allAvailableDevices.add(SampleDeviceInfo(deviceName,deviceHardwareAddress,false,true,device))
+                    allAvailableDevices.add(BlClassicDeviceInfo(deviceName,deviceHardwareAddress,false,true,device))
                 }
 
             }
 
         }
         if(null != pairedDevices){
-            activityHandler?.obtainMessage(Constants.DEVICE_FOUND_UPDATE,Constants.WHOLE_DEVICE_LIST)!!.sendToTarget()
+            activityHandler?.obtainMessage(Constants.DEVICE_FOUND_UPDATE, Constants.WHOLE_DEVICE_LIST)!!.sendToTarget()
         }
     }
 
@@ -89,7 +90,7 @@ object BluetoothDeviceServices {
         this.bluetoothAdapter = adapter
     }
 
-    fun addFoundBlDeviceInList(device:SampleDeviceInfo){
+    fun addFoundBlDeviceInList(device:BlClassicDeviceInfo){
         if(!checkDeviceIsAlreadyPresent(device.mac_addr)) {
             allAvailableDevices.add(device)
             activityHandler?.obtainMessage(Constants.DEVICE_FOUND_UPDATE, Constants.ONE_DEVICE)!!
@@ -101,8 +102,8 @@ object BluetoothDeviceServices {
         allAvailableDevices.removeAll(allAvailableDevices)
     }
 
-    fun getConnectedBlDevices():MutableList<SampleDeviceInfo>{
-        var devices:MutableList<SampleDeviceInfo> = mutableListOf()
+    fun getConnectedBlDevices():MutableList<BlClassicDeviceInfo>{
+        var devices:MutableList<BlClassicDeviceInfo> = mutableListOf()
         devices.addAll(allAvailableDevices.filter { it.is_conn })
         //devices.addAll(pairedDeviceList.filter { it.is_conn })
         return devices
@@ -116,7 +117,7 @@ object BluetoothDeviceServices {
         return null
     }
 
-    fun getAllAvailableDevice():MutableList<SampleDeviceInfo>{
+    fun getAllAvailableDevice():MutableList<BlClassicDeviceInfo>{
         sortAllAvaialbleDevice()
         return allAvailableDevices
     }
@@ -177,16 +178,16 @@ object BluetoothDeviceServices {
     fun setClientSocket(socket:BluetoothSocket?){
         if(socket != null){
             bluetoothClientSocket = socket
-            connDeviceInfo = SampleDeviceInfo(socket.remoteDevice.name,socket.remoteDevice.address,true,checkDeviceIsPaired(socket.remoteDevice),socket.remoteDevice)
+            connDeviceInfo = BlClassicDeviceInfo(socket.remoteDevice.name,socket.remoteDevice.address,true,checkDeviceIsPaired(socket.remoteDevice),socket.remoteDevice)
             setDeviceConnTrue(socket.remoteDevice)
             sortAllAvaialbleDevice()
-            activityHandler?.obtainMessage(Constants.CLIENT_SOCKET,Constants.CONNECT)?.sendToTarget()
+            activityHandler?.obtainMessage(Constants.CLIENT_SOCKET, Constants.CONNECT)?.sendToTarget()
             return
         }
 
         bluetoothClientSocket = null
         connDeviceInfo = null
-        activityHandler?.obtainMessage(Constants.CLIENT_SOCKET,Constants.DIS_CONNECT)?.sendToTarget()
+        activityHandler?.obtainMessage(Constants.CLIENT_SOCKET, Constants.DIS_CONNECT)?.sendToTarget()
 
        }
 
@@ -199,7 +200,7 @@ object BluetoothDeviceServices {
         bluetoothClientSocket?.close()
         bluetoothClientSocket = null
         connDeviceInfo = null
-        activityHandler?.obtainMessage(Constants.CLIENT_SOCKET,Constants.DIS_CONNECT)?.sendToTarget()
+        activityHandler?.obtainMessage(Constants.CLIENT_SOCKET, Constants.DIS_CONNECT)?.sendToTarget()
     }
 
     fun isSocketConnect():Boolean{

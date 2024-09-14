@@ -7,7 +7,7 @@ import android.util.Log
 import java.io.IOException
 import java.util.UUID
 
-class BluetoothConnectAsClientSocketThread () {
+class BlClassicConnectAsClientSocketThread () {
 
     private var thread:ConnectThread ? = null
 
@@ -28,7 +28,7 @@ class BluetoothConnectAsClientSocketThread () {
     }
     fun cancelThread(){
 
-        var status = BluetoothDeviceServices.getBluetoothAdapter()?.cancelDiscovery()
+        var status = BlClassicDeviceServices.getBluetoothAdapter()?.cancelDiscovery()
         if(status != null && status){
             println("Discovery ended {cancelThread}")
         }else{
@@ -53,8 +53,8 @@ class BluetoothConnectAsClientSocketThread () {
 
         public override fun run() {
             // Cancel discovery because it otherwise slows down the connection.
-            if(BluetoothDeviceServices.getBluetoothAdapter()?.isDiscovering == true){
-                BluetoothDeviceServices.getBluetoothAdapter()?.cancelDiscovery()
+            if(BlClassicDeviceServices.getBluetoothAdapter()?.isDiscovering == true){
+                BlClassicDeviceServices.getBluetoothAdapter()?.cancelDiscovery()
             }
 
             try {
@@ -67,12 +67,12 @@ class BluetoothConnectAsClientSocketThread () {
                     // The connection attempt succeeded. Perform work associated with
                     // the connection in a separate thread.
                     //manageMyConnectedSocket(socket)
-                    BluetoothDeviceServices.setClientSocket(socket)
+                    BlClassicDeviceServices.setClientSocket(socket)
 
                 }
             }
             catch (e:Exception){
-                BluetoothDeviceServices.sentSocketErrorMsg(e.message)
+                BlClassicDeviceServices.sentSocketErrorMsg(e.message)
                 println("Socket error :${e.message}\n")
             }
 
@@ -85,7 +85,7 @@ class BluetoothConnectAsClientSocketThread () {
                 mmSocket?.close()
                 //BluetoothDeviceServices.disconnectClientSocket()
             } catch (e: IOException) {
-                BluetoothDeviceServices.sentSocketErrorMsg(e.message)
+                BlClassicDeviceServices.sentSocketErrorMsg(e.message)
                 //BluetoothDeviceServices.disconnectClientSocket()
                 Log.e(TAG, "Could not close the client socket", e)
             }

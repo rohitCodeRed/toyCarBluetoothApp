@@ -14,8 +14,12 @@
 
     <item
         android:id="@+id/action_blActivity"
-        android:orderInCategory="100"
         android:title="@string/action_blActivity"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_bleScan"
+        android:title="@string/action_bleScan"
         app:showAsAction="never" />
 
     <item

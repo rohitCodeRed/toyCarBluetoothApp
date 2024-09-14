@@ -7,7 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 
-class BluetoothModeChangeReceiver : BroadcastReceiver() {
+class BlBroadcastReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
 
@@ -17,13 +17,15 @@ class BluetoothModeChangeReceiver : BroadcastReceiver() {
             when(state){
                 BluetoothAdapter.STATE_OFF -> {
                     println(" Bluetooth is turned OFF, please turn it on")
-                    BluetoothDeviceServices.setBluetoothEnable(false)
+                    BlClassicDeviceServices.setBluetoothEnable(false)
+                    BleDeviceListServices.setBluetoothStatus(false)
                     Toast.makeText(context, "Bluetooth is turned OFF, please turn it on", Toast.LENGTH_LONG).show()
                 }
                 BluetoothAdapter.STATE_TURNING_OFF -> {}
                 BluetoothAdapter.STATE_ON -> {
                     println(" Bluetooth is turned ON")
-                    BluetoothDeviceServices.setBluetoothEnable(true)
+                    BlClassicDeviceServices.setBluetoothEnable(true)
+                    BleDeviceListServices.setBluetoothStatus(true)
                     Toast.makeText(context, "Bluetooth is turned ON", Toast.LENGTH_LONG).show()
 
                 }
@@ -41,7 +43,7 @@ class BluetoothModeChangeReceiver : BroadcastReceiver() {
 
             //if(device!=null){
             try {
-                BluetoothDeviceServices.addFoundBlDeviceInList(SampleDeviceInfo(device!!.name,device.address,false,false,device))
+                BlClassicDeviceServices.addFoundBlDeviceInList(BlClassicDeviceInfo(device!!.name,device.address,false,false,device))
             }catch(e:Exception){
                 println("Error occured in broadcast reciever: ${e.message}")
             }
@@ -54,10 +56,11 @@ class BluetoothModeChangeReceiver : BroadcastReceiver() {
         }
 
         else if(action.equals(BluetoothAdapter.ACTION_DISCOVERY_STARTED)){
-            BluetoothDeviceServices.setActionDiscovery(true)
+            BlClassicDeviceServices.setActionDiscovery(true)
             //println("Entering into action discovery started")
 
         }
+
 //        else if(action.equals((BluetoothAdapter.ACTION_DISCOVERY_FINISHED))){
 //            BluetoothDeviceServices.setActionDiscovery(false)
 //           // println("Entering into action discovery finished")

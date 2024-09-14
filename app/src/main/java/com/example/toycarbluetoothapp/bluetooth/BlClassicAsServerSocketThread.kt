@@ -9,7 +9,7 @@ import java.io.IOException
 private class BluetoothAsServerSocket(name:String, uuid:java.util.UUID) : Thread() {
 
     private val mmServerSocket: BluetoothServerSocket? by lazy(LazyThreadSafetyMode.NONE) {
-        BluetoothDeviceServices.getBluetoothAdapter()?.listenUsingInsecureRfcommWithServiceRecord(name, uuid)
+        BlClassicDeviceServices.getBluetoothAdapter()?.listenUsingInsecureRfcommWithServiceRecord(name, uuid)
     }
 
     override fun run() {
@@ -24,7 +24,7 @@ private class BluetoothAsServerSocket(name:String, uuid:java.util.UUID) : Thread
                 null
             }
             socket?.also {
-                BluetoothDeviceServices.setServerSocket(it)
+                BlClassicDeviceServices.setServerSocket(it)
                 //manageMyConnectedSocket(it)
                 mmServerSocket?.close()
                 shouldLoop = false

@@ -3,7 +3,7 @@ package com.example.toycarbluetoothapp.bluetooth
 import android.bluetooth.BluetoothDevice
 
 
-data class SampleDeviceInfo(val n:String,val mDdr:String,val isConn:Boolean = false,var isPaired: Boolean = false,var device:BluetoothDevice? = null){
+data class BlClassicDeviceInfo(val n:String, val mDdr:String, val isConn:Boolean = false, var isPaired: Boolean = false, var device:BluetoothDevice? = null){
 
     var name: String = n
     var mac_addr : String = mDdr

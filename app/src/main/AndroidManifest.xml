@@ -4,13 +4,11 @@
     <!-- Request legacy Bluetooth permissions on older devices. -->
     <uses-permission
         android:name="android.permission.BLUETOOTH"
-        android:maxSdkVersion="30" />
-<!--    <uses-permission-->
-<!--        android:name="android.permission.BLUETOOTH_ADMIN"-->
-<!--        android:maxSdkVersion="30" />-->
-
-<!--    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" -->
-<!--        android:maxSdkVersion="30" />-->
+        android:maxSdkVersion="30" /> <!-- <uses-permission -->
+    <!-- android:name="android.permission.BLUETOOTH_ADMIN" -->
+    <!-- android:maxSdkVersion="30" /> -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" -->
+    <!-- android:maxSdkVersion="30" /> -->
     <!--
  Needed only if your app looks for Bluetooth devices.
          If your app doesn't use Bluetooth scan results to derive physical
@@ -18,16 +16,14 @@
          <a href="#assert-never-for-location">strongly assert that your app
          doesn't derive physical location</a>.
     -->
-
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation"/> <!-- Needed only if your app makes the device discoverable to Bluetooth devices. -->
-     <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
-    <!-- Needed only if your app communicates with already-paired Bluetooth devices. -->
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" /> <!-- Needed only if your app makes the device discoverable to Bluetooth devices. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" /> <!-- Needed only if your app communicates with already-paired Bluetooth devices. -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" /> <!-- Needed only if your app uses Bluetooth scan results to derive physical location. -->
-<!--    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />-->
-<!--    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />-->
-
+    <!-- <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" /> -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" /> -->
     <uses-feature
         android:name="android.hardware.bluetooth"
         android:required="false" />
@@ -46,12 +42,23 @@
         android:theme="@style/Theme.ToyCarBluetoothApp"
         tools:targetApi="31">
         <activity
-            android:name=".ListBluetoothDevices"
+            android:name=".AllBluetoothDeviceListActivity"
+            android:exported="false"
+            android:label="@string/title_activity_all_bluetooth_device_list"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.ToyCarBluetoothApp" />
+        <activity
+            android:name=".BleDeviceListActivity"
             android:exported="false"
             android:label="@string/title_activity_list_bluetooth_devices"
-            android:theme="@style/Theme.ToyCarBluetoothApp"
             android:parentActivityName=".MainActivity"
-            />
+            android:theme="@style/Theme.ToyCarBluetoothApp" />
+        <activity
+            android:name=".BlClassicDevicesListActivity"
+            android:exported="false"
+            android:label="@string/title_activity_list_bluetooth_devices"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/Theme.ToyCarBluetoothApp" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -63,6 +70,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".bluetooth.BLeDeviceServices"
+            android:enabled="true"/>
     </application>
 
 </manifest>

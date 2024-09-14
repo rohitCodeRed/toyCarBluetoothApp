@@ -1,5 +1,7 @@
 package com.example.toycarbluetoothapp.ui.deviceinfo
 
+import android.app.Activity
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +18,21 @@ class DeviceInfoFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+
+    private var mContext: Context? =null
+
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        if (context is Activity) {
+            mContext = context
+        }
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        mContext = null
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
