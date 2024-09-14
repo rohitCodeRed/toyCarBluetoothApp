@@ -2,39 +2,24 @@ package com.example.toycarbluetoothapp.bluetooth
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
-import android.content.ContentValues.TAG
 import android.util.Log
 import java.io.IOException
 import java.util.UUID
 
 class BlClassicConnectAsClientSocketThread () {
-
+    private var TAG:String="BlClassicConnectAsClientSocketThread"
     private var thread:ConnectThread ? = null
 
     fun setThread(device:BluetoothDevice,uuid: UUID){
-        println("Initializing thread...")
-            thread = ConnectThread(device,uuid)
-        if(thread == null){
-            println("Thread not initilaize...")
-        }
+        thread = ConnectThread(device,uuid)
     }
 
     fun startThread(){
-        println("Starting thread...")
         if(thread != null){
-            println("Starting thread...in.....")
             thread!!.start()
         }
     }
     fun cancelThread(){
-
-        var status = BlClassicDeviceServices.getBluetoothAdapter()?.cancelDiscovery()
-        if(status != null && status){
-            println("Discovery ended {cancelThread}")
-        }else{
-            println("Error in cancel discovery {cancelThread()}")
-        }
-
         if(thread != null){
             if(thread!!.isAlive){
                 thread?.cancel()
@@ -53,12 +38,12 @@ class BlClassicConnectAsClientSocketThread () {
 
         public override fun run() {
             // Cancel discovery because it otherwise slows down the connection.
-            if(BlClassicDeviceServices.getBluetoothAdapter()?.isDiscovering == true){
-                BlClassicDeviceServices.getBluetoothAdapter()?.cancelDiscovery()
+            if(BluetoothDeviceListHelper.getAdaptor()?.isDiscovering == true){
+                BluetoothDeviceListHelper.getAdaptor()?.cancelDiscovery()
             }
 
             try {
-                println("In Connection thread....")
+                println("In client socket connection thread....")
                 mmSocket?.let { socket ->
                     // Connect to the remote device through the socket. This call blocks
                     // until it succeeds or throws an exception.
@@ -67,12 +52,12 @@ class BlClassicConnectAsClientSocketThread () {
                     // The connection attempt succeeded. Perform work associated with
                     // the connection in a separate thread.
                     //manageMyConnectedSocket(socket)
-                    BlClassicDeviceServices.setClientSocket(socket)
+                    BluetoothDeviceListHelper.setClientSocket(socket)
 
                 }
             }
             catch (e:Exception){
-                BlClassicDeviceServices.sentSocketErrorMsg(e.message)
+                BluetoothDeviceListHelper.disconnectClientSocket()
                 println("Socket error :${e.message}\n")
             }
 
@@ -83,10 +68,9 @@ class BlClassicConnectAsClientSocketThread () {
         fun cancel() {
             try {
                 mmSocket?.close()
-                //BluetoothDeviceServices.disconnectClientSocket()
+                BluetoothDeviceListHelper.disconnectClientSocket()
             } catch (e: IOException) {
-                BlClassicDeviceServices.sentSocketErrorMsg(e.message)
-                //BluetoothDeviceServices.disconnectClientSocket()
+                BluetoothDeviceListHelper.disconnectClientSocket()
                 Log.e(TAG, "Could not close the client socket", e)
             }
         }

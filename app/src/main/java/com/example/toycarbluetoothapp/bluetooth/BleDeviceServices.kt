@@ -1,7 +1,6 @@
 package com.example.toycarbluetoothapp.bluetooth
 
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothClass
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
@@ -19,9 +18,7 @@ import android.bluetooth.BluetoothProfile
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import android.util.Log
 import com.example.toycarbluetoothapp.Constants
-import java.security.Provider.Service
 import java.util.UUID
 
 
@@ -36,7 +33,7 @@ class BLeDeviceServices: android.app.Service(){
     var connectionState:Boolean = false
 
     fun initializeBlAdaptor(): Boolean {
-        bluetoothAdapter = BleDeviceListServices.getAdaptor()
+        bluetoothAdapter = BluetoothDeviceListHelper.getAdaptor()
         if (bluetoothAdapter == null) {
             println("$TAG: Unable to obtain a BluetoothAdapter.")
             return false

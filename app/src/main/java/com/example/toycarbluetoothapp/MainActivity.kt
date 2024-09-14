@@ -4,19 +4,12 @@ package com.example.toycarbluetoothapp
 import android.Manifest
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.IBinder
-import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -33,11 +26,9 @@ import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
-import com.example.toycarbluetoothapp.bluetooth.BLeDeviceServices
 import com.example.toycarbluetoothapp.bluetooth.BlClassicConnectAsClientSocketThread
-import com.example.toycarbluetoothapp.bluetooth.BlClassicDeviceServices
-import com.example.toycarbluetoothapp.bluetooth.BlBroadcastReceiver
-import com.example.toycarbluetoothapp.bluetooth.BleDeviceListServices
+import com.example.toycarbluetoothapp.bluetooth.BluetoothStatusReceiver
+import com.example.toycarbluetoothapp.bluetooth.BluetoothDeviceListHelper
 import com.example.toycarbluetoothapp.databinding.ActivityMainBinding
 import com.example.toycarbluetoothapp.ui.ble.BleFragment
 import com.example.toycarbluetoothapp.ui.classic.ClassicFragment
@@ -47,42 +38,22 @@ import com.google.android.material.navigation.NavigationView
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener,
     DrawerListener {
+
     private val TAG = "MainActivity"
-    //private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
-    private var blModeStatus :BlBroadcastReceiver? = null
+    private var blModeStatus :BluetoothStatusReceiver? = null
     private var blEnableIntent: Intent? = null
     private var bluetoothManager: BluetoothManager? = null
     private var bluetoothAdapter: BluetoothAdapter?=null
 
-
     private var  socketCreationClass: BlClassicConnectAsClientSocketThread? = null
 
-    private var fragmentMap:Map<String,Int> = mapOf<String,Int>()
+    private var fragmentMap:Map<String,Int> = mapOf()
 
     val REQUEST_ENABLE_BT = 2
     val REQUEST_ENABLE_BT_OLDER = 1
 
     private lateinit var frManager:FragmentManager
-
-    private var pHandler: Handler = Handler(Looper.myLooper()!!){
-        when(it.what){
-            Constants.PERMISSION_HANDLER -> {
-                if(it.obj == 1){
-                    //startDeviceDiscovery()
-                }
-                println("$TAG: Permission granted..\n")
-            }
-            Constants.BL_HANDLER ->{
-                if(it.obj == 1){
-                    //startDeviceDiscovery()
-                }
-
-                println("$TAG: Bluetooth Enabled..\n")
-            }
-        }
-        return@Handler false
-    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -104,9 +75,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         initBackPressedAction()
 
-        initHelper()
-
-        initSocketCreateClass()
+        initSocketForClassicDevice()
 
         initBluetoothInstances()
 
@@ -134,11 +103,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
     }
 
+
     private fun initFragmentNavigationMap(){
         fragmentMap = mapOf(Pair(Constants.HOME_FRAGMENT,R.id.nav_classic),
             Pair(Constants.BLE_FRAGMENT,R.id.nav_ble),
             Pair(Constants.DEVICE_INFO,R.id.nav_device_info))
     }
+
 
     private fun initNavigationLayout(){
         val drawerLayout: DrawerLayout = binding.drawerLayout
@@ -151,13 +122,13 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toggle.syncState();
 
         navView.setNavigationItemSelectedListener(this)
-
-
     }
+
 
     override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
 
     }
+
 
     override fun onDrawerOpened(drawerView: View) {
         Constants.VISIBLE_FRAGMENT.forEach {
@@ -202,6 +173,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     }
 
+
     private fun loadFragmentWithNavigation(fr:Fragment,code:String,flag:Int){
         loadFragment(fr,code,flag)
         binding.navView.menu.findItem(fragmentMap.get(code)!!).setChecked(true)
@@ -211,6 +183,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private fun initBackPressedAction(){
         onBackPressedDispatcher.addCallback(this, callback)
     }
+
 
     private val callback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -231,13 +204,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
 
-
-
-
-    private fun initHelper() {
-       BlClassicDeviceServices.setActivityHandler(pHandler)
-    }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)
@@ -249,16 +215,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
         when(item.itemId){
            R.id.action_blActivity ->{
-               val intent = Intent (this, BlClassicDevicesListActivity::class.java)
+               val intent = Intent (this, BluetoothDeviceListActivity::class.java)
                startActivity(intent)
            }
-            R.id.action_bleScan ->{
-//                val intent = Intent (this, BleDeviceListActivity::class.java)
-//                startActivity(intent)
-
-                val intent = Intent (this, AllBluetoothDeviceListActivity::class.java)
-                startActivity(intent)
-            }
             R.id.action_enablePerm->{
                 checkMultiplePermissions()
             }
@@ -312,25 +271,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
 
-
     override fun onMenuOpened(featureId: Int, menu: Menu): Boolean {
 //        println("In menu enable perm")
         menu.children.forEach {
             when(it.itemId){
                 R.id.action_enablePerm->{
-                    if(BlClassicDeviceServices.getPermission()){
-
+                    if(BluetoothDeviceListHelper.getPermissionStatus()){
                         it.setChecked(true)
                     }
                     else{
-                        //it.icon = null
                         it.setChecked(false)
                     }
-
                 }
                 R.id.action_enableBl->{
-                    if(BlClassicDeviceServices.getBluetoothEnStatus()){
-
+                    if(BluetoothDeviceListHelper.getBluetoothStatus()){
                         it.setChecked(true)
                     }
                     else{
@@ -338,14 +292,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                     }
                 }
             }
-
         }
         return super.onMenuOpened(featureId, menu)
     }
 
+
     override fun onStop() {
         super.onStop()
     }
+
 
     override fun onDestroy() {
         super.onDestroy()
@@ -353,20 +308,17 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
 
-
     private fun initBluetoothInstances(){
         bluetoothManager = getSystemService(BluetoothManager::class.java)
-
         bluetoothAdapter = bluetoothManager!!.adapter
         blEnableIntent =  Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-
-        BlClassicDeviceServices.setBluetoothAdapter(bluetoothAdapter!!)
-        BleDeviceListServices.setAdaptor(bluetoothAdapter)
+        BluetoothDeviceListHelper.setAdaptor(bluetoothAdapter)
     }
 
-    private fun initSocketCreateClass(){
+
+    private fun initSocketForClassicDevice(){
         socketCreationClass = BlClassicConnectAsClientSocketThread()
-        BlClassicDeviceServices.setSocketCreateClass(socketCreationClass)
+        BluetoothDeviceListHelper.setSocketCreateClass(socketCreationClass)
     }
 
 
@@ -377,30 +329,21 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         }
 
         if (bluetoothAdapter!!.isEnabled) {
-            BlClassicDeviceServices.setBluetoothEnable(true);
-            BleDeviceListServices.setBluetoothStatus(true)
+            BluetoothDeviceListHelper.setBluetoothStatus(true)
 
         }else{
-            BlClassicDeviceServices.setBluetoothEnable(false);
-            BleDeviceListServices.setBluetoothStatus(false)
+            BluetoothDeviceListHelper.setBluetoothStatus(false)
         }
 
     }
 
+
     private fun initBroadcastReceiver(){
-        blModeStatus = BlBroadcastReceiver()
+        blModeStatus = BluetoothStatusReceiver()
 
         val filterAF = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         registerReceiver(blModeStatus, filterAF)
 
-//        val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-//        registerReceiver(blModeStatus, filter)
-//
-//        val discFilterS = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-//        registerReceiver(blModeStatus, discFilterS)
-
-//        val discFilterE = IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-//        registerReceiver(blModeStatus, discFilterE)
     }
 
 
@@ -461,8 +404,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             }
             else{
-                BlClassicDeviceServices.setPermissionGrant(true)
-                BleDeviceListServices.setPermissionStatus(true)
+                BluetoothDeviceListHelper.setPermissionStatus(true)
             }
         }
 
@@ -494,15 +436,15 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             }
             else{
-                BlClassicDeviceServices.setPermissionGrant(true)
-                BleDeviceListServices.setPermissionStatus(true)
+                BluetoothDeviceListHelper.setPermissionStatus(true)
             }
         }
     }
 
+
     private fun enableBluetooth(){
 
-        if(!BlClassicDeviceServices.getPermission()){
+        if(!BluetoothDeviceListHelper.getPermissionStatus()){
             Toast.makeText(this, "Please Enable Bluetooth Permissions first.", Toast.LENGTH_SHORT).show();
             return
         }
@@ -521,10 +463,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             return
         }
 
-        BlClassicDeviceServices.setBluetoothEnable(true)
-        BleDeviceListServices.setBluetoothStatus(true)
-
-
+        BluetoothDeviceListHelper.setBluetoothStatus(true)
     }
 
 
@@ -540,6 +479,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     }
 
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -549,29 +489,25 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if(requestCode == REQUEST_ENABLE_BT){
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED
                 && grantResults[2] == PackageManager.PERMISSION_GRANTED && grantResults[3] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permission for BT Granted! for code : $REQUEST_ENABLE_BT", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Permission for Bluetooth granted...", Toast.LENGTH_SHORT).show();
 
-                BlClassicDeviceServices.setPermissionGrant(true);
-                BleDeviceListServices.setPermissionStatus(true)
+                BluetoothDeviceListHelper.setPermissionStatus(true)
             }
             else {
                 Toast.makeText(this, "Permission Denied!", Toast.LENGTH_SHORT).show();
 
-                BlClassicDeviceServices.setPermissionGrant(false);
-                BleDeviceListServices.setPermissionStatus(false)
+                BluetoothDeviceListHelper.setPermissionStatus(false)
             }
         }
         else if(requestCode == REQUEST_ENABLE_BT_OLDER){
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permission for BT_SCAN Granted!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Permission for Bluetooth granted...", Toast.LENGTH_SHORT).show();
 
-                BlClassicDeviceServices.setPermissionGrant(true);
-                BleDeviceListServices.setPermissionStatus(true)
+                BluetoothDeviceListHelper.setPermissionStatus(true)
             }
             else {
                 Toast.makeText(this, "Permission Denied!", Toast.LENGTH_SHORT).show();
-                BlClassicDeviceServices.setPermissionGrant(false);
-                BleDeviceListServices.setPermissionStatus(false)
+                BluetoothDeviceListHelper.setPermissionStatus(false)
             }
         }
 
@@ -579,29 +515,18 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     }
 
 
-
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
         if(requestCode == REQUEST_ENABLE_BT){
             if(resultCode == Activity.RESULT_OK){
-
-                BlClassicDeviceServices.setBluetoothEnable(true)
-                BleDeviceListServices.setBluetoothStatus(true)
-                //startDeviceDiscovery()
-                println("$TAG: User pressed ok button")
-
+                BluetoothDeviceListHelper.setBluetoothStatus(true)
             }else if(resultCode == Activity.RESULT_CANCELED){
-
-                BlClassicDeviceServices.setBluetoothEnable(false)
-                BleDeviceListServices.setBluetoothStatus(false)
-                println("$TAG: User pressed No button")
+                BluetoothDeviceListHelper.setBluetoothStatus(false)
             }
         }
         super.onActivityResult(requestCode, resultCode, data)
-
     }
-
 
 
 
@@ -611,6 +536,10 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
 //Nav Graph navigation view
 /*
+ //private lateinit var appBarConfiguration: AppBarConfiguration
+    private lateinit var binding: ActivityMainBinding
+
+
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)

@@ -33,12 +33,16 @@ class BluetoothDataTransferThread () {
     }
 
     fun sendCommand(s:String){
-        if(thread!!.isAlive && BlClassicDeviceServices.isSocketConnect()){
-            thread!!.write(s.toByteArray())
+        try {
+            if(thread!!.isAlive && BluetoothDeviceListHelper.getClientSocket() != null){
+                thread!!.write(s.toByteArray())
 
+            }
+        }
+        catch(e:Exception){
+            println("Not able send data : error - ${e.message}")
         }
 
-        //println("Connection is alive..\n")
     }
 
     fun cancelThread() {
@@ -47,8 +51,6 @@ class BluetoothDataTransferThread () {
                 thread!!.cancel()
             }
         }
-
-
     }
 
     private inner class ConnectThread(pSocket: BluetoothSocket,pHandler:Handler): Thread() {

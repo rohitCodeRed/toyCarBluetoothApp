@@ -1,7 +1,7 @@
 package com.example.toycarbluetoothapp.ui.classic
 
 import android.app.Activity
-import android.bluetooth.BluetoothSocket
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.os.Bundle
 import android.os.Handler
@@ -14,14 +14,17 @@ import android.widget.ImageButton
 import android.widget.RadioButton
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.toycarbluetoothapp.Constants
 import com.example.toycarbluetoothapp.R
+import com.example.toycarbluetoothapp.bluetooth.BlClassicConnectAsClientSocketThread
 import com.example.toycarbluetoothapp.bluetooth.BluetoothDataTransferThread
-import com.example.toycarbluetoothapp.bluetooth.BlClassicDeviceServices
+import com.example.toycarbluetoothapp.bluetooth.BluetoothDeviceListHelper
 import com.example.toycarbluetoothapp.databinding.FragmentClassicBinding
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.util.UUID
 
 
 class ClassicFragment : Fragment(), OnClickListener{
@@ -37,15 +40,17 @@ class ClassicFragment : Fragment(), OnClickListener{
     lateinit var  dataTransferClass: BluetoothDataTransferThread
     private var mContext:Context? =null
 
+    private var  socketCreationClass: BlClassicConnectAsClientSocketThread? = null
+    private  var bluetoothAdapter: BluetoothAdapter? = null
+
+    private var isConnecting:Boolean = false
+
 
      override fun onAttach(context: Context) {
          super.onAttach(context)
          if (context is Activity) {
              mContext = context
          }
-
-         //println("Context s${}")
-         //mContext = context
      }
 
     override fun onDetach() {
@@ -63,7 +68,9 @@ class ClassicFragment : Fragment(), OnClickListener{
         _binding = FragmentClassicBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        dataTransferClass = BluetoothDataTransferThread()
+
+        initHandler()
+        initReference()
 
         initDataViewModel()
 
@@ -71,18 +78,28 @@ class ClassicFragment : Fragment(), OnClickListener{
 
         updateStartBtn()
 
+        updateDeviceInfo()
+
         return root
     }
 
 
-//     private fun initHandler() {
-//         BluetoothDeviceServices.setActivityHandler(pHandler)
-//     }
+     private fun initHandler() {
+         BluetoothDeviceListHelper.setActivityHandler(pHandler)
+     }
+
+    private fun initReference(){
+        dataTransferClass = BluetoothDataTransferThread()
+        socketCreationClass = BluetoothDeviceListHelper.getSocketCreateClass()
+        bluetoothAdapter = BluetoothDeviceListHelper.getAdaptor()
+    }
 
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+
+        stopConnection()
     }
 
 
@@ -122,8 +139,6 @@ class ClassicFragment : Fragment(), OnClickListener{
             }
         }
 
-
-
     }
 
 
@@ -135,57 +150,53 @@ class ClassicFragment : Fragment(), OnClickListener{
             Constants.MESSAGE_WRITE ->{
                 println("Written happened, ${it.obj}")
             }
-            Constants.MESSAGE_DEVICE_NAME->{
-
-            }
-            Constants.MESSAGE_TOAST ->{
-
-                if (null != activity) {
-                    Toast.makeText(activity, it.getData().getString(Constants.MSG_KEY),
-                        Toast.LENGTH_SHORT).show();
-                }
-            }
+//            Constants.MESSAGE_TOAST ->{
+//
+//                if (null != activity) {
+//                    Toast.makeText(activity, it.getData().getString(Constants.MSG_KEY),
+//                        Toast.LENGTH_SHORT).show();
+//                }
+//            }
             Constants.CLIENT_SOCKET ->{
                 if(it.obj == Constants.CONNECT){
 
+                    startDataTransfer()
 
                 }
                 else if(it.obj == Constants.DIS_CONNECT){
-
+                    updateStartBtn()
+                    Toast.makeText(activity,
+                        "Classic Device not able to create socket",
+                        Toast.LENGTH_SHORT).show();
+                    isConnecting = false
                 }
-            }
-            Constants.CLIENT_SOCKET_ERROR -> {
-
             }
             Constants.CONNECTION_STOP ->{
                 updateStartBtn()
-                updateDeviceInfo()
-                BlClassicDeviceServices.disconnectClientSocket()
+                //updateDeviceInfo()
+                //BlClassicDeviceServices.disconnectClientSocket()
                 Toast.makeText(activity,
-                    "Device is Disconnected",
+                    "Device is Disconnected...",
                     Toast.LENGTH_SHORT).show();
-            }
-            Constants.CONNECTION_ERROR ->{
-                updateStartBtn()
-                BlClassicDeviceServices.disconnectClientSocket()
-                println("Connection error occurred..${it.obj}")
+                isConnecting = false
             }
             Constants.CONNECT->{
                 updateStartBtn()
-                updateDeviceInfo()
+                //updateDeviceInfo()
                 Toast.makeText(activity,
                     "Device is Ready for Communication",
                     Toast.LENGTH_SHORT).show();
+                isConnecting = false
             }
         }
         return@Handler true
     }
 
      private fun updateDeviceInfo() {
-         var device = BlClassicDeviceServices.connDeviceInfo
+         val device = BluetoothDeviceListHelper.selectedDeviceInfo
          if(device != null){
-             if(device.is_conn){
-                 classicViewModel.deviceAddress.value = "Device: ${device.mac_addr}"
+             if(device.isSelected){
+                 classicViewModel.deviceAddress.value = "Device: ${device.addr}"
                  classicViewModel.deviceName.value = "Addr: ${device.name}"
              }
          }else{
@@ -236,12 +247,21 @@ class ClassicFragment : Fragment(), OnClickListener{
 
     override fun onClick(v: View?) {
             if(v?.id == binding.imgBtnStart.id){
-                if(dataTransferClass.getThreadStatus() == true){
-                    stopDataTransfer()
-//                    showDialogForStopDataTransfer("Device Connection","Do you want to close it ...?")
-                }else{
-                    startDataTransfer()
+
+                if(!isConnecting){
+                    if(dataTransferClass.getThreadStatus() == true){
+                        //stopDataTransfer()
+                        showDialogForStopDataTransfer("Device Connection","Do you want to close it ...?")
+                    }else{
+                        startConnection()
+                    }
                 }
+                else{
+                    Toast.makeText(activity,
+                        "Device is connecting....",
+                        Toast.LENGTH_SHORT).show();
+                }
+
 
             }
             else if(v?.id == binding.fBtnAcc.id){
@@ -259,100 +279,92 @@ class ClassicFragment : Fragment(), OnClickListener{
     }
 
 
-
-
-
      fun sendData(s:String){
          dataTransferClass.sendCommand(s)
      }
+
+
     private fun startDataTransfer(){
-        if(!BlClassicDeviceServices.getPermission()){
-            Toast.makeText(activity,
-                "Bluetooth permission is not set.",
-                Toast.LENGTH_SHORT).show();
 
-            return
-        }
-
-        if(!BlClassicDeviceServices.getBluetoothEnStatus()){
-            Toast.makeText(activity,
-                "Bluetooth is not turned on.",
-                Toast.LENGTH_SHORT).show();
-            return
-        }
-
-        val socket:BluetoothSocket? = BlClassicDeviceServices.getClientSocket()
-        if(null == socket){
-            Toast.makeText(activity,
-                "Socket not created",
-                Toast.LENGTH_SHORT).show();
-            return
-        }
-
-        if(!socket.isConnected){
-            Toast.makeText(activity,
-                "Device is Disconnected",
-                Toast.LENGTH_SHORT).show();
-            return
+        val socket = BluetoothDeviceListHelper.getClientSocket()
+        if(socket != null){
+            dataTransferClass.setThread(socket,pHandler)
+            dataTransferClass.startThread()
         }
 
 
-        dataTransferClass.setThread(socket,pHandler)
-        dataTransferClass.startThread()
-
-    }
-
-
-    private fun stopDataTransfer(){
-
-            dataTransferClass.cancelThread()
     }
 
 
      private fun updateStartBtn(){
-
          if(dataTransferClass.getThreadStatus() == true){
-             //binding.imgBtnStart.tag="ON"
              classicViewModel.startBtn.value= true
          }else{
-             //binding.imgBtnStart.tag="OFF"
              classicViewModel.startBtn.value = false
          }
+     }
 
-//         try {
-//             if(dataTransferClass.getThreadStatus() == true){
-//                 //binding.imgBtnStart.tag="ON"
-//                 homeViewModel.startBtn.value= true
-//             }else{
-//                 //binding.imgBtnStart.tag="OFF"
-//                 homeViewModel.startBtn.value = false
-//             }
-//         }catch(e:Exception){
-//             println("Error occured at updateBTn")
-//         }
+     private fun showDialogForStopDataTransfer(title:String, message:String){
 
+             val builder: AlertDialog.Builder = AlertDialog.Builder(mContext!!)
+             builder.setTitle(title)
+                 .setMessage(message)
+                 .setPositiveButton(android.R.string.ok) { _, _ ->
+                     stopConnection()
+                 }.setNegativeButton(android.R.string.cancel){_,_ ->
+
+                 }
+
+             builder.create().show()
 
      }
 
-//     private fun showDialogForStopDataTransfer(title:String, message:String){
-//         if(this.activity != null && activity?.applicationContext != null){
-//             val builder: AlertDialog.Builder = AlertDialog.Builder(activity!!.applicationContext)
-//             builder.setTitle(title)
-//                 .setMessage(message)
-//                 .setPositiveButton(android.R.string.ok) { _, _ ->
-//                     stopDataTransfer()
-//                 }.setNegativeButton(android.R.string.cancel){_,_ ->
-//
-//                 }
-//
-//             builder.create().show()
-//         }
-//         else{
-//             println("Activity is null....")
-//         }
-//
-//
-//     }
+    private fun startConnection(){
+        if(BluetoothDeviceListHelper.getBluetoothStatus() && BluetoothDeviceListHelper.getPermissionStatus()){
+            var uuid: UUID?
+            try {
+                uuid = UUID.fromString(Constants.CLIENT_UUID)
+            }catch (e:Exception){
+                uuid = null
+                Toast.makeText(
+                    activity,
+                    "Error occurred while socket connect: ${e.localizedMessage}",
+                    Toast.LENGTH_SHORT
+                ).show();
+                return
+            }
+
+            val device = BluetoothDeviceListHelper.selectedDeviceInfo
+
+            if(device?.device != null){
+                isConnecting = true
+                Toast.makeText(activity,
+                    "Device is connecting....",
+                    Toast.LENGTH_SHORT).show();
+
+
+                socketCreationClass!!.setThread(device.device!!,uuid)
+                socketCreationClass!!.startThread()
+
+                return
+            }
+
+            Toast.makeText(activity,
+                "Please select device..",
+                Toast.LENGTH_SHORT).show();
+
+            return
+        }
+        Toast.makeText(activity,
+            "Please set permission and turn on the bluetooth...",
+            Toast.LENGTH_SHORT).show();
+    }
+
+    private fun stopConnection(){
+        dataTransferClass.cancelThread()
+        socketCreationClass?.cancelThread()
+    }
+
 
 
  }

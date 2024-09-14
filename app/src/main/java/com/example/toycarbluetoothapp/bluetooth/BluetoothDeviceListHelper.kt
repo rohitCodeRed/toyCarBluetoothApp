@@ -2,9 +2,11 @@ package com.example.toycarbluetoothapp.bluetooth
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothSocket
 import android.os.Handler
+import com.example.toycarbluetoothapp.Constants
 
-object BleDeviceListServices {
+object BluetoothDeviceListHelper {
     private val TAG = "BleDeviceListServices"
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var isDiscoveryStarted:Boolean = false
@@ -13,15 +15,39 @@ object BleDeviceListServices {
     private var isClassicDeviceConnected:Boolean = false
 
     private var isPermissionGranted:Boolean = false
-    var selectedDeviceInfo:BleDeviceInfo? = null
-    //private val pairedDeviceList:MutableList<BleDeviceInfo> = mutableListOf()
-    private var allDevice:MutableList<BleDeviceInfo> = mutableListOf()
+    var selectedDeviceInfo:BluetoothDeviceInfo? = null
+    private var allDevice:MutableList<BluetoothDeviceInfo> = mutableListOf()
     private  var activityHandler: Handler? = null
 
     private var bleServiceClassRef:BLeDeviceServices? = null
 
     private var socketCreationClass:BlClassicConnectAsClientSocketThread? = null
+    private var bluetoothClientSocket: BluetoothSocket? = null
 
+
+
+    fun setClientSocket(socket:BluetoothSocket?){
+        if(socket != null){
+            bluetoothClientSocket = socket
+
+            activityHandler?.obtainMessage(Constants.CLIENT_SOCKET, Constants.CONNECT)?.sendToTarget()
+            return
+        }
+
+        bluetoothClientSocket = null
+    }
+
+    fun getClientSocket():BluetoothSocket?{
+        return bluetoothClientSocket
+    }
+
+    fun disconnectClientSocket(){
+
+        bluetoothClientSocket?.close()
+        bluetoothClientSocket = null
+
+       activityHandler?.obtainMessage(Constants.CLIENT_SOCKET, Constants.DIS_CONNECT)?.sendToTarget()
+    }
 
     fun setSocketCreateClass(s:BlClassicConnectAsClientSocketThread?){
         socketCreationClass = s
@@ -99,12 +125,12 @@ object BleDeviceListServices {
         }
     }
 
-    fun getDeviceList():MutableList<BleDeviceInfo>{
+    fun getDeviceList():MutableList<BluetoothDeviceInfo>{
         return allDevice
     }
 
 
-    fun scanBluetoothPairedDevice():MutableList<BleDeviceInfo>{
+    fun scanBluetoothPairedDevice():MutableList<BluetoothDeviceInfo>{
         val pairedDevices: Set<BluetoothDevice>? = bluetoothAdapter!!.bondedDevices
         pairedDevices?.forEach { device ->
             addDevice(device)
@@ -120,7 +146,7 @@ object BleDeviceListServices {
 
        if((device != null) &&(device?.name != null) && (device.address != null) ){
            if(!isDeviceAlreadyPresent(device.address)){
-               allDevice.add(BleDeviceInfo(device.name,device.address,device,false))
+               allDevice.add(BluetoothDeviceInfo(device.name,device.address,device,false))
                println("$TAG: Device found  IN: ${device.name}")
                println("$TAG: Device found IN: ${device.address}")
                return true
@@ -142,7 +168,7 @@ object BleDeviceListServices {
 
     }
 
-    fun getDeviceByAddress(addr:String):BleDeviceInfo?{
+    fun getDeviceByAddress(addr:String):BluetoothDeviceInfo?{
         val dev = getDeviceList().find { it.addr ==  addr}
         if(dev != null){
             return dev
@@ -150,7 +176,7 @@ object BleDeviceListServices {
         return null
     }
 
-    fun selectDevice(d:BleDeviceInfo){
+    fun selectDevice(d:BluetoothDeviceInfo){
         if(selectedDeviceInfo != null){
             deSelectDevice(d)
         }
@@ -165,7 +191,7 @@ object BleDeviceListServices {
         sortDeviceList()
     }
 
-    fun deSelectDevice(d:BleDeviceInfo){
+    fun deSelectDevice(d:BluetoothDeviceInfo){
 
         allDevice.forEach {
             if (it.addr == d.addr) {

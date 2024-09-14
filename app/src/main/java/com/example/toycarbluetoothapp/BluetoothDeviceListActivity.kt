@@ -26,14 +26,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import androidx.navigation.ui.AppBarConfiguration
-import com.example.toycarbluetoothapp.bluetooth.BleDeviceInfo
-import com.example.toycarbluetoothapp.bluetooth.BleDeviceListServices
-import com.example.toycarbluetoothapp.databinding.ActivityAllBluetoothDeviceListBinding
+import com.example.toycarbluetoothapp.bluetooth.BluetoothDeviceInfo
+import com.example.toycarbluetoothapp.bluetooth.BluetoothDeviceListHelper
+import com.example.toycarbluetoothapp.databinding.ActivityBluetoothDeviceListBinding
 
-class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
+class BluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
-    private lateinit var binding: ActivityAllBluetoothDeviceListBinding
+    private lateinit var binding: ActivityBluetoothDeviceListBinding
 
     private val TAG = "AllBluetoothDeviceListActivity"
     //private lateinit var binding:
@@ -79,7 +79,7 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
             when(intent.action) {
                 BluetoothDevice.ACTION_FOUND->{
                     val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE,BluetoothDevice::class.java)
-                    if(BleDeviceListServices.addDevice(device)){
+                    if(BluetoothDeviceListHelper.addDevice(device)){
                         addView(device!!)
                     }
                 }
@@ -88,7 +88,7 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
                 }
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED->{
                     scanning = false
-                    Toast.makeText(this@AllBluetoothDeviceListActivity, "Scanning of device ended, click to restart...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this@BluetoothDeviceListActivity, "Scanning of device ended, click to restart...", Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -99,7 +99,7 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityAllBluetoothDeviceListBinding.inflate(layoutInflater)
+        binding = ActivityBluetoothDeviceListBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setSupportActionBar(binding.deviceListToolbar)
@@ -118,11 +118,11 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
 
 
     private fun initHandler() {
-        BleDeviceListServices.setActivityHandler(eventHandler)
+        BluetoothDeviceListHelper.setActivityHandler(eventHandler)
     }
 
     private fun initBleScanner(){
-        bluetoothAdapter = BleDeviceListServices.getAdaptor()
+        bluetoothAdapter = BluetoothDeviceListHelper.getAdaptor()
         bluetoothLeScanner = bluetoothAdapter!!.bluetoothLeScanner
     }
 
@@ -149,11 +149,11 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
 
 
     private fun scanDevice() {
-        if(BleDeviceListServices.getBluetoothStatus() && BleDeviceListServices.getPermissionStatus()){
+        if(BluetoothDeviceListHelper.getBluetoothStatus() && BluetoothDeviceListHelper.getPermissionStatus()){
             clearView()
             clearDeviceList()
 
-            val pairedDevices:MutableList<BleDeviceInfo>  = BleDeviceListServices.scanBluetoothPairedDevice()
+            val pairedDevices:MutableList<BluetoothDeviceInfo>  = BluetoothDeviceListHelper.scanBluetoothPairedDevice()
             pairedDevices.forEach {
                 addView(it.device!!)
             }
@@ -185,12 +185,12 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
 
 
             try {
-                if(BleDeviceListServices.addDevice(result.device)){
+                if(BluetoothDeviceListHelper.addDevice(result.device)){
                     addView(result.device)
                 }
                 //BleDeviceListServices.notifyDataSetChanged()
             }catch(e:Exception){
-                Toast.makeText(this@AllBluetoothDeviceListActivity, "Not able to add device..${e.message}", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this@BluetoothDeviceListActivity, "Not able to add device..${e.message}", Toast.LENGTH_SHORT).show();
             }
 
         }
@@ -199,7 +199,7 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
 
     private fun startDeviceDiscovery() {
 
-        if(BleDeviceListServices.getBluetoothStatus() && BleDeviceListServices.getPermissionStatus()){
+        if(BluetoothDeviceListHelper.getBluetoothStatus() && BluetoothDeviceListHelper.getPermissionStatus()){
             if(bluetoothAdapter != null){
                 if(bluetoothAdapter!!.isDiscovering){
                     bluetoothAdapter!!.cancelDiscovery()
@@ -215,7 +215,7 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
     }
 
 
-    private fun updateCardView(devInfo: BleDeviceInfo): CardView {
+    private fun updateCardView(devInfo: BluetoothDeviceInfo): CardView {
         val inflatedView: View = layoutInflater.inflate(R.layout.card_device,null)
         val pCardView: CardView = inflatedView.findViewById(R.id.device_card_view)
 
@@ -249,10 +249,9 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
             val name = v.findViewById<TextView>(R.id.device_name).text
             val mac_addr = v.findViewById<TextView>(R.id.mac_addr).text
 
-            val device = BleDeviceListServices.getDeviceByAddress(mac_addr.toString())
+            val device = BluetoothDeviceListHelper.getDeviceByAddress(mac_addr.toString())
             if(device != null){
                 if(device.isSelected){
-                    //deSelectDevice(device)
                     showDialogForSocketDisConnect("Ble Device","Do you want to de select the device : ${name}..?",device)
                 }else{
                     selectDevice(device)
@@ -261,34 +260,32 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
                 Toast.makeText(this, "Device is dummy...", Toast.LENGTH_SHORT).show();
             }
 
-            //TODOD...
-
         }
     }
 
-    private fun selectDevice(d: BleDeviceInfo) {
-        BleDeviceListServices.selectDevice(d)
+    private fun selectDevice(d: BluetoothDeviceInfo) {
+        BluetoothDeviceListHelper.selectDevice(d)
         updateDeviceListView()
         Toast.makeText(this, "Device: ${d.name} is selected...", Toast.LENGTH_SHORT).show()
     }
 
     private fun updateDeviceListView() {
         clearView()
-        val data = BleDeviceListServices.getDeviceList()
+        val data = BluetoothDeviceListHelper.getDeviceList()
         data.forEach {
             pLinearLayout.addView(updateCardView(it))
         }
     }
 
 
-    private fun deSelectDevice(d: BleDeviceInfo) {
-        BleDeviceListServices.deSelectDevice(d)
+    private fun deSelectDevice(d: BluetoothDeviceInfo) {
+        BluetoothDeviceListHelper.deSelectDevice(d)
         updateDeviceListView()
     }
 
 
     private fun addView(d: BluetoothDevice){
-        pLinearLayout.addView(updateCardView(BleDeviceInfo(d.name,d.address,d,false)))
+        pLinearLayout.addView(updateCardView(BluetoothDeviceInfo(d.name,d.address,d,false)))
     }
 
 
@@ -297,10 +294,10 @@ class AllBluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
     }
 
     private fun clearDeviceList(){
-        BleDeviceListServices.clearAllAvailableDevices()
+        BluetoothDeviceListHelper.clearAllAvailableDevices()
     }
 
-    private fun showDialogForSocketDisConnect(title:String, message:String,d: BleDeviceInfo){
+    private fun showDialogForSocketDisConnect(title:String, message:String,d: BluetoothDeviceInfo){
         val builder: AlertDialog.Builder = AlertDialog.Builder(this)
         builder.setTitle(title)
             .setMessage(message)

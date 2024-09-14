@@ -9,7 +9,7 @@
     <string name="action_enablePerm">BL Permission</string>
     <string name="action_enableBl">BL Enable</string>
     <string name="action_ConnDev">Connect</string>
-    <string name="action_blActivity">Scan Classic Devices</string>
+    <string name="action_blActivity">Scan Device</string>
     <string name="action_bleScan">Scan BLe Devices</string>
     <string name="action_startDisc">Restart Scanning </string>
 
@@ -33,7 +33,7 @@
 
     <string name="device_name">POCO F1 XX</string>
     <string name="mac_addr">812:xedsf::876:1:58h</string>
-    <string name="conn_btn">Connect</string>
+    <string name="conn_btn">Select</string>
 
     <string name="conn">Connected</string>
     <string name="dis_conn">Disconnected</string>

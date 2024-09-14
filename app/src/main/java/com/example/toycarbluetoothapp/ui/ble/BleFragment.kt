@@ -26,7 +26,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.toycarbluetoothapp.Constants
 import com.example.toycarbluetoothapp.R
 import com.example.toycarbluetoothapp.bluetooth.BLeDeviceServices
-import com.example.toycarbluetoothapp.bluetooth.BleDeviceListServices
+import com.example.toycarbluetoothapp.bluetooth.BluetoothDeviceListHelper
 import com.example.toycarbluetoothapp.databinding.FragmentBleBinding
 import android.view.View.OnClickListener
 import androidx.appcompat.app.AlertDialog
@@ -99,7 +99,7 @@ class BleFragment : Fragment(), OnClickListener{
 
 
     private fun initHandler() {
-         BleDeviceListServices.setActivityHandler(pHandler)
+         BluetoothDeviceListHelper.setActivityHandler(pHandler)
      }
 
 
@@ -152,24 +152,7 @@ class BleFragment : Fragment(), OnClickListener{
         ) {
             println("$TAG: Binding happen successfully....\n")
             bluetoothService = (service as BLeDeviceServices.LocalBinder).getService()
-            BleDeviceListServices.setBleServiceClass(bluetoothService)
-
-//            bluetoothService?.let { bluetooth ->
-//                if (!bluetooth.initializeBlAdaptor()) {
-//                    println("$TAG: Unable to initialize Bluetooth")
-//                }
-//                else{
-//                    // call functions on service to check connection and connect to devices
-//                    if(BleDeviceListServices.selectedDeviceInfo != null){
-//                        bluetooth.connect(BleDeviceListServices.selectedDeviceInfo!!.addr)
-//
-//                    }
-//                    else {
-//                        println("$TAG: No device is selected...")
-//                    }
-//
-//                }
-//            }
+            BluetoothDeviceListHelper.setBleServiceClass(bluetoothService)
         }
 
         override fun onServiceDisconnected(componentName: ComponentName) {
@@ -185,8 +168,8 @@ class BleFragment : Fragment(), OnClickListener{
             }
             else{
                 // call functions on service to check connection and connect to devices
-                if(BleDeviceListServices.selectedDeviceInfo != null){
-                    bluetooth.connect(BleDeviceListServices.selectedDeviceInfo!!.addr)
+                if(BluetoothDeviceListHelper.selectedDeviceInfo != null){
+                    bluetooth.connect(BluetoothDeviceListHelper.selectedDeviceInfo!!.addr)
 
                 }
                 else {
@@ -218,7 +201,7 @@ class BleFragment : Fragment(), OnClickListener{
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 BLeDeviceServices.ACTION_GATT_CONNECTED -> {
-                    BleDeviceListServices.setBleDeviceConnectStatus(true)
+                    BluetoothDeviceListHelper.setBleDeviceConnectStatus(true)
                     isDeviceConnected = true
                     Toast.makeText(activity,
                         "Device is connected and ready for data transfer...",
@@ -229,7 +212,7 @@ class BleFragment : Fragment(), OnClickListener{
 //                    updateConnectionState(R.string.connected)
                 }
                 BLeDeviceServices.ACTION_GATT_DISCONNECTED -> {
-                    BleDeviceListServices.setBleDeviceConnectStatus(false)
+                    BluetoothDeviceListHelper.setBleDeviceConnectStatus(false)
                     isDeviceConnected = false
                     Toast.makeText(activity,
                         "Device is disconnected...",
@@ -358,7 +341,7 @@ class BleFragment : Fragment(), OnClickListener{
     }
 
     private fun updateDeviceInfo() {
-        val device = BleDeviceListServices.selectedDeviceInfo
+        val device = BluetoothDeviceListHelper.selectedDeviceInfo
         if(device != null){
             if(device.isSelected){
                 bleViewModel.deviceAddress.value = "Device: ${device.addr}"

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".BleDeviceListActivity">
+    tools:context=".BluetoothDeviceListActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ToyCarBluetoothApp.AppBarOverlay">
 
         <com.google.android.material.appbar.MaterialToolbar
-            android:id="@+id/ble_device_toolbar"
+            android:id="@+id/device_list_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
@@ -22,8 +22,7 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <include layout="@layout/activity_ble_device_list" />
-
+    <include layout="@layout/content_bluetooth_device_list" />
 
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
