@@ -2,12 +2,14 @@ package com.example.toycarbluetoothapp.bluetooth
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothSocket
 import android.os.Handler
 import com.example.toycarbluetoothapp.Constants
 
 object BluetoothDeviceListHelper {
-    private val TAG = "BleDeviceListServices"
+    private val TAG = "BluetoothDeviceListHelper"
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var isDiscoveryStarted:Boolean = false
     private var isBluetoothEnable:Boolean = false
@@ -23,6 +25,28 @@ object BluetoothDeviceListHelper {
 
     private var socketCreationClass:BlClassicConnectAsClientSocketThread? = null
     private var bluetoothClientSocket: BluetoothSocket? = null
+
+    private var selectedBleDevCharacteristics:MutableList<BluetoothGattCharacteristic> = mutableListOf()
+
+
+    fun updateCharacteristic(){
+        if(bleServiceClassRef != null){
+            val services:List<BluetoothGattService?>? = bleServiceClassRef?.getSupportedGattServices()
+
+            services?.forEach{service->
+                val gattCharacteristics = service?.characteristics
+
+                gattCharacteristics?.forEach { characteristic ->
+                    selectedBleDevCharacteristics.add(characteristic)
+                }
+            }
+        }
+
+    }
+
+    fun getCharacteristicsFormUUID(uuid: String): BluetoothGattCharacteristic? {
+        return selectedBleDevCharacteristics.find { it.uuid.toString() == uuid }
+    }
 
 
 
@@ -80,7 +104,6 @@ object BluetoothDeviceListHelper {
     fun setBleServiceClass(c:BLeDeviceServices?){
         if(c != null){
             bleServiceClassRef = c
-            println("$TAG: Ble service class updated...")
             return
         }
         bleServiceClassRef = null
@@ -146,7 +169,7 @@ object BluetoothDeviceListHelper {
 
        if((device != null) &&(device?.name != null) && (device.address != null) ){
            if(!isDeviceAlreadyPresent(device.address)){
-               allDevice.add(BluetoothDeviceInfo(device.name,device.address,device,false))
+               allDevice.add(BluetoothDeviceInfo(device.name,device.address,device,false,false,false))
                println("$TAG: Device found  IN: ${device.name}")
                println("$TAG: Device found IN: ${device.address}")
                return true
@@ -176,7 +199,7 @@ object BluetoothDeviceListHelper {
         return null
     }
 
-    fun selectDevice(d:BluetoothDeviceInfo){
+    fun selectDevice(d:BluetoothDeviceInfo,type:String?){
         if(selectedDeviceInfo != null){
             deSelectDevice(d)
         }
@@ -184,6 +207,16 @@ object BluetoothDeviceListHelper {
         allDevice.forEach {
             if (it.addr == d.addr) {
                 it.isSelected = true
+
+                if(type.equals("Ble")){
+                    it.bleType = true
+                    it.classicType = false
+
+                }else if(type.equals("Classic")){
+                    it.classicType = true
+                    it.bleType = false
+                }
+
                 selectedDeviceInfo = it
             }
         }

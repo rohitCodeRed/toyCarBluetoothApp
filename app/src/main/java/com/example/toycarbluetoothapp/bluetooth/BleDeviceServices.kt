@@ -6,12 +6,6 @@ import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_INDICATE
 import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_NOTIFY
-import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_SIGNED_WRITE
-import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_WRITE
-import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE
-import android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
-import android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-import android.bluetooth.BluetoothGattCharacteristic.WRITE_TYPE_SIGNED
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothProfile
@@ -24,12 +18,9 @@ import java.util.UUID
 
 class BLeDeviceServices: android.app.Service(){
     private val TAG = "BLeDeviceServices"
-    private val EXTRA_DATA = "CHARAS_DATA"
     private val binder = LocalBinder()
-
     private var bluetoothAdapter: BluetoothAdapter? = null
     private var bluetoothGatt: BluetoothGatt? = null
-
     var connectionState:Boolean = false
 
     fun initializeBlAdaptor(): Boolean {
@@ -41,6 +32,7 @@ class BLeDeviceServices: android.app.Service(){
         return true
     }
 
+
     fun connect(address: String): Boolean {
         bluetoothAdapter?.let { adapter ->
             try {
@@ -49,12 +41,12 @@ class BLeDeviceServices: android.app.Service(){
                 bluetoothGatt = device.connectGatt(this, false, bluetoothGattCallback)
                 return true
             } catch (exception: IllegalArgumentException) {
-                println("$TAG: Device not found with provided address.  Unable to connect.")
+                println("$TAG: Device not found with provided address. Unable to connect.")
                 return false
             }
             // connect to the GATT server on the device
         } ?: run {
-            println("$TAG: BluetoothAdapter not initialized")
+            println("$TAG: BluetoothAdapter not initialized..")
             return false
         }
 
@@ -64,7 +56,9 @@ class BLeDeviceServices: android.app.Service(){
         bluetoothAdapter?.let { adapter ->
             try {
                 // connect to the GATT server on the device
+                bluetoothGatt?.disconnect()
                 bluetoothGatt?.close()
+                BluetoothDeviceListHelper.setBleDeviceConnectStatus(false)
                 broadcastUpdate(ACTION_GATT_DISCONNECTED)
 
                 return true
@@ -85,15 +79,17 @@ class BLeDeviceServices: android.app.Service(){
 
             println("$TAG: Connection state found...  $newState")
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                // successfully connected to the GATT Server
+                println("$TAG: Connection to gatt server happened.....")
                 connectionState = true
+                BluetoothDeviceListHelper.setBleDeviceConnectStatus(true)
                 broadcastUpdate(ACTION_GATT_CONNECTED)
-                println("$TAG: Connect to gatt server happened.....")
+
                 bluetoothGatt?.discoverServices()
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 // disconnected from the GATT Server
                 connectionState = false
+                BluetoothDeviceListHelper.setBleDeviceConnectStatus(false)
                 println("$TAG: Disconnection gatt server happened.....")
                 broadcastUpdate(ACTION_GATT_DISCONNECTED)
             }
@@ -101,7 +97,7 @@ class BLeDeviceServices: android.app.Service(){
 
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                println("$TAG: onServicesDiscovered received: $status")
+                println("$TAG: Services discovered ...")
                 broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED)
             } else {
                 println("$TAG: No services discovered...")
@@ -115,6 +111,7 @@ class BLeDeviceServices: android.app.Service(){
             status: Int
         ) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                println("$TAG: Read characteristics happened..")
                 broadCastUpdateWithData(ACTION_DATA_AVAILABLE, characteristic,data)
             }
         }
@@ -124,7 +121,35 @@ class BLeDeviceServices: android.app.Service(){
             characteristic: BluetoothGattCharacteristic,
             data:ByteArray
         ) {
+            println("$TAG: Characteristic changed happened...\n")
             broadCastUpdateWithData(ACTION_DATA_AVAILABLE, characteristic,data)
+        }
+
+        override fun onDescriptorRead(
+            gatt: BluetoothGatt,
+            descriptor: BluetoothGattDescriptor,
+            status: Int,
+            value: ByteArray
+        ) {
+            super.onDescriptorRead(gatt, descriptor, status, value)
+            if(status == BluetoothGatt.GATT_SUCCESS){
+                val byte:Byte = 0
+                if(value[0] != byte){
+                    println("$TAG: Descriptor read successfully.... with Characteristic uuid : ${descriptor.getCharacteristic().uuid} \n")
+                }
+            }
+        }
+
+        override fun onDescriptorWrite(
+            gatt: BluetoothGatt?,
+            descriptor: BluetoothGattDescriptor?,
+            status: Int
+        ) {
+            super.onDescriptorWrite(gatt, descriptor, status)
+
+            if(status == BluetoothGatt.GATT_SUCCESS){
+                println("$TAG: Descriptor written successfully...")
+            }
         }
 
         override fun onCharacteristicWrite(
@@ -134,8 +159,7 @@ class BLeDeviceServices: android.app.Service(){
         ) {
             super.onCharacteristicWrite(gatt, characteristic, status)
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                //todo
-                println("$TAG: BluetoothGatt write succesffully...")
+                println("$TAG: BluetoothGatt write successfully...")
             }
         }
 
@@ -149,7 +173,7 @@ class BLeDeviceServices: android.app.Service(){
         bluetoothGatt?.let { gatt ->
             gatt.readCharacteristic(characteristic)
         } ?: run {
-            println("$TAG: BluetoothGatt not initialized")
+            println("$TAG: BluetoothGatt not initialized...")
             return
         }
     }
@@ -164,71 +188,37 @@ class BLeDeviceServices: android.app.Service(){
             val value: ByteArray
             val properties = characteristic.properties
             value = if (properties and PROPERTY_NOTIFY > 0) {
+                //println("$TAG: value: ${BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE}")
                 BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
             } else if (properties and PROPERTY_INDICATE > 0) {
+                //println("$TAG: value: ${BluetoothGattDescriptor.ENABLE_INDICATION_VALUE}")
                 BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
             } else {
                 println("$TAG: ERROR: Characteristic %s does not have notify or indicate property ${characteristic.uuid}")
-
                 return
             }
 
-            val descriptor = characteristic.getDescriptor(UUID.fromString(Constants.CCC_UUID))
-            //descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-            gatt.writeDescriptor(descriptor,value)
 
-            // This is specific to Heart Rate Measurement.
-//            if (BluetoothLeService.UUID_HEART_RATE_MEASUREMENT == characteristic.uuid) {
-//                val descriptor = characteristic.getDescriptor(UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG))
-//                descriptor.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-//                gatt.writeDescriptor(descriptor)
-//            }
-        } ?: run {
-            println("$TAG: BluetoothGatt not initialized")
-        }
-
-    }
-
-
-    fun writeCharacteristics(characteristic:BluetoothGattCharacteristic,bytesToWrite:ByteArray){
-        var flag = 0
-        var correctType:Int = 0
-
-        Constants.POSSIBLE_WRITE_TYPES.forEach {
-            var writeProperty: Int = 0
-            when(it){
-                WRITE_TYPE_DEFAULT ->{
-                    writeProperty = PROPERTY_WRITE
-                }
-
-                WRITE_TYPE_NO_RESPONSE->{
-                    writeProperty = PROPERTY_WRITE_NO_RESPONSE
-                }
-
-                WRITE_TYPE_SIGNED->{
-                    writeProperty = PROPERTY_SIGNED_WRITE
-                }
-
-            }
-
-            if((characteristic.properties and writeProperty) == 0 ) {
-                println("$TAG: ERROR: Characteristic ${characteristic.uuid} does not support writeType ${it}")
-                //return
+            val descriptor = characteristic.getDescriptor(UUID.fromString(Constants.BLE_DEVICE_DESCRIPTOR_UUID))
+            if(descriptor != null){
+                println("$TAG: Description :uuid: ${descriptor.characteristic.uuid}")
+                gatt.writeDescriptor(descriptor,value)
             }else{
-                correctType = it
+                println("$TAG: Descriptor is null..")
             }
-        }
 
-        if(correctType == 0){
-            println("$TAG: ERROR: Not able to find correct types...")
-            return
+        } ?: run {
+            println("$TAG: BluetoothGatt not initialized for notification...")
         }
-
-        bluetoothGatt?.writeCharacteristic(characteristic,bytesToWrite,correctType)
 
     }
 
 
+    fun writeCharacteristic(characteristic:BluetoothGattCharacteristic,bytesToWrite:ByteArray){
+
+            bluetoothGatt?.writeCharacteristic(characteristic,bytesToWrite,characteristic.writeType)
+
+    }
 
 
     private fun broadcastUpdate(action: String) {
@@ -236,49 +226,14 @@ class BLeDeviceServices: android.app.Service(){
         sendBroadcast(intent)
     }
 
+
     private fun broadCastUpdateWithData(action: String, characteristic: BluetoothGattCharacteristic, data:ByteArray?){
         val intent = Intent(action)
 
         if (data?.isNotEmpty() == true) {
-            val hexString: String = data.joinToString(separator = " ") {
-                String.format("%02X", it)
-            }
-            intent.putExtra(EXTRA_DATA, "$data\n$hexString")
+            intent.putExtra(Constants.DATA_KEY, data.toString(Charsets.UTF_8))
         }
-
         sendBroadcast(intent)
-
-        // This is special handling for the Heart Rate Measurement profile. Data
-        // parsing is carried out as per profile specifications.
-        /*when (characteristic.uuid) {
-            UUID_HEART_RATE_MEASUREMENT -> {
-                val flag = characteristic.properties
-                val format = when (flag and 0x01) {
-                    0x01 -> {
-                        Log.d(TAG, "Heart rate format UINT16.")
-                        BluetoothGattCharacteristic.FORMAT_UINT16
-                    }
-                    else -> {
-                        Log.d(TAG, "Heart rate format UINT8.")
-                        BluetoothGattCharacteristic.FORMAT_UINT8
-                    }
-                }
-                val heartRate = characteristic.getIntValue(format, 1)
-                Log.d(TAG, String.format("Received heart rate: %d", heartRate))
-                intent.putExtra(EXTRA_DATA, (heartRate).toString())
-            }
-            else -> {
-                // For all other profiles, writes the data formatted in HEX.
-
-                if (data?.isNotEmpty() == true) {
-                    val hexString: String = data.joinToString(separator = " ") {
-                        String.format("%02X", it)
-                    }
-                    intent.putExtra(EXTRA_DATA, "$data\n$hexString")
-                }
-            }
-        }*/
-        //sendBroadcast(intent)
     }
 
 
@@ -293,9 +248,6 @@ class BLeDeviceServices: android.app.Service(){
 
         const val ACTION_DATA_AVAILABLE = "com.example.bluetooth.le.ACTION_DATA_AVAILABLE"
 
-        private const val STATE_DISCONNECTED = 1
-        private const val STATE_CONNECTED = 2
-
     }
 
 
@@ -308,7 +260,6 @@ class BLeDeviceServices: android.app.Service(){
     }
 
     override fun onBind(intent: Intent): IBinder? {
-        println("$TAG: On bind happened..")
         return binder
     }
 
@@ -319,8 +270,6 @@ class BLeDeviceServices: android.app.Service(){
 
     inner class LocalBinder : Binder() {
         fun getService() : BLeDeviceServices {
-
-            println("$TAG: Get service called....")
             return this@BLeDeviceServices
         }
     }

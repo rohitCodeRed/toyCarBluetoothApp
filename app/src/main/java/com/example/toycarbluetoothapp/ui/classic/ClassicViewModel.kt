@@ -34,4 +34,8 @@ class ClassicViewModel : ViewModel() {
         value = false
     }
 
+    val messageUnit:MutableLiveData<String> =  MutableLiveData<String>().apply {
+        value = "Direction is Forward...!!"
+    }
+
 }

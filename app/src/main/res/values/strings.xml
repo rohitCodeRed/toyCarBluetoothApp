@@ -38,8 +38,8 @@
     <string name="conn">Connected</string>
     <string name="dis_conn">Disconnected</string>
 
-    <string name="text_M1">Motor 1</string>
-    <string name="text_M2">Motor 2</string>
+    <string name="text_M1">M1 Duty Cycle</string>
+    <string name="text_M2">M2 Duty Cycle</string>
     <string name="text_unit">Motor RPM: XX</string>
     <string name="text_rpm_value">00 : 00</string>
     <string name="text_deviceName">Device: XX</string>

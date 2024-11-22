@@ -4,14 +4,11 @@ import android.app.Activity
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
 import android.content.BroadcastReceiver
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.Handler
-import android.os.IBinder
 import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
@@ -31,6 +28,8 @@ import com.example.toycarbluetoothapp.databinding.FragmentBleBinding
 import android.view.View.OnClickListener
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import com.example.toycarbluetoothapp.ui.bottomsheet.BleUpdateUuid
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 class BleFragment : Fragment(), OnClickListener{
     private val TAG = "BLeFragmentActivity"
@@ -39,18 +38,9 @@ class BleFragment : Fragment(), OnClickListener{
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-
     private var mContext: Context? =null
     private lateinit var bleViewModel: BleViewModel
-
     private var bluetoothService : BLeDeviceServices? = null
-
-    private var mGattCharacteristics:MutableList<BluetoothGattCharacteristic> = mutableListOf()
-
-    private var isDeviceConnected:Boolean = false
-
-
-
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -64,6 +54,7 @@ class BleFragment : Fragment(), OnClickListener{
         mContext = null
 
     }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -74,18 +65,12 @@ class BleFragment : Fragment(), OnClickListener{
         _binding = FragmentBleBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val gattServiceIntent = Intent(mContext, BLeDeviceServices::class.java)
-        mContext?.bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
-
-
         initDataViewModel()
 
-        initHandler()
         initBtnOnClick()
 
-        initRegisterReciever()
-
         updateDeviceInfo()
+
         updateStartBtn()
 
         return root
@@ -97,10 +82,6 @@ class BleFragment : Fragment(), OnClickListener{
         )
     }
 
-
-    private fun initHandler() {
-         BluetoothDeviceListHelper.setActivityHandler(pHandler)
-     }
 
 
     private fun initDataViewModel(){
@@ -144,24 +125,9 @@ class BleFragment : Fragment(), OnClickListener{
         }
     }
 
-    // Code to manage Service lifecycle.
-    private val serviceConnection: ServiceConnection = object : ServiceConnection {
-        override fun onServiceConnected(
-            componentName: ComponentName,
-            service: IBinder
-        ) {
-            println("$TAG: Binding happen successfully....\n")
-            bluetoothService = (service as BLeDeviceServices.LocalBinder).getService()
-            BluetoothDeviceListHelper.setBleServiceClass(bluetoothService)
-        }
-
-        override fun onServiceDisconnected(componentName: ComponentName) {
-            println("$TAG: Binding disconnected.....")
-            bluetoothService = null
-        }
-    }
 
     private fun connectToGattServer(){
+        bluetoothService = BluetoothDeviceListHelper.getBleServiceClass()
         bluetoothService?.let { bluetooth ->
             if (!bluetooth.initializeBlAdaptor()) {
                 println("$TAG: Unable to initialize Bluetooth")
@@ -170,7 +136,6 @@ class BleFragment : Fragment(), OnClickListener{
                 // call functions on service to check connection and connect to devices
                 if(BluetoothDeviceListHelper.selectedDeviceInfo != null){
                     bluetooth.connect(BluetoothDeviceListHelper.selectedDeviceInfo!!.addr)
-
                 }
                 else {
                     Toast.makeText(activity,
@@ -185,12 +150,12 @@ class BleFragment : Fragment(), OnClickListener{
 
 
     private fun disconnectGattServer() {
+        bluetoothService = BluetoothDeviceListHelper.getBleServiceClass()
         bluetoothService?.let { bluetooth ->
             if (!bluetooth.initializeBlAdaptor()) {
                 println("$TAG: Unable to initialize Bluetooth")
             }
             else{
-                // call functions on service to check connection and connect to devices
                 bluetooth.disConnect()
             }
         }
@@ -201,77 +166,63 @@ class BleFragment : Fragment(), OnClickListener{
         override fun onReceive(context: Context, intent: Intent) {
             when (intent.action) {
                 BLeDeviceServices.ACTION_GATT_CONNECTED -> {
-                    BluetoothDeviceListHelper.setBleDeviceConnectStatus(true)
-                    isDeviceConnected = true
                     Toast.makeText(activity,
                         "Device is connected and ready for data transfer...",
                         Toast.LENGTH_SHORT).show();
-                    updateStartBtn()
-                    //updateDeviceInfo()
 
-//                    updateConnectionState(R.string.connected)
+                    updateStartBtn()
                 }
                 BLeDeviceServices.ACTION_GATT_DISCONNECTED -> {
-                    BluetoothDeviceListHelper.setBleDeviceConnectStatus(false)
-                    isDeviceConnected = false
                     Toast.makeText(activity,
                         "Device is disconnected...",
                         Toast.LENGTH_SHORT).show();
+
                     updateStartBtn()
-                    //updateDeviceInfo()
-//                    updateConnectionState(R.string.disconnected)
                 }
                 BLeDeviceServices.ACTION_GATT_SERVICES_DISCOVERED -> {
                     // Show all the supported services and characteristics on the user interface.
-                    displayGattServices(bluetoothService?.getSupportedGattServices())
+                    //bluetoothService = BluetoothDeviceListHelper.getBleServiceClass()
+                    BluetoothDeviceListHelper.updateCharacteristic()
+                    setNotifyCharacteristic()
                 }
                 BLeDeviceServices.ACTION_DATA_AVAILABLE->{
-                    println("$TAG: Data is available ${intent.getByteArrayExtra("CHARAS_DATA")}")
+
+                    println("$TAG: Data is available ${intent.getStringExtra(Constants.DATA_KEY).toString()}")
+
                 }
             }
         }
     }
 
 
-    private fun displayGattServices(gattServices: List<BluetoothGattService?>?) {
-            if (gattServices == null) return
-            var uuid: String?
-            //val unknownServiceString: String = resources.getString(R.string.unknown_service)
-            //val unknownCharaString: String = resources.getString(R.string.unknown_characteristic)
-            val gattServiceData: MutableList<HashMap<String, String>> = mutableListOf()
-            val gattCharacteristicData: MutableList<ArrayList<HashMap<String, String>>> =
-                mutableListOf()
-            mGattCharacteristics = mutableListOf()
-
-            // Loops through available GATT Services.
-            gattServices.forEach { gattService ->
-                val currentServiceData = HashMap<String, String>()
-                uuid = gattService?.uuid.toString()
-                currentServiceData["NAME"] = Constants.getServiceAttr()["name"]!!
-                currentServiceData["UUID"] = uuid!!
-                gattServiceData += currentServiceData
-
-                val gattCharacteristicGroupData: ArrayList<HashMap<String, String>> = arrayListOf()
-                val gattCharacteristics = gattService?.characteristics
-                val charas: MutableList<BluetoothGattCharacteristic> = mutableListOf()
-
-                // Loops through available Characteristics.
-                gattCharacteristics?.forEach { gattCharacteristic ->
-                    charas += gattCharacteristic
-                    val currentCharaData: HashMap<String, String> = hashMapOf()
-                    uuid = gattCharacteristic.uuid.toString()
-                    currentCharaData["NAME"] = Constants.getServiceAttr()["charas"]!!
-                    currentCharaData["UUID"] = uuid!!
-                    gattCharacteristicGroupData += currentCharaData
-                }
-                mGattCharacteristics += charas
-                gattCharacteristicData += gattCharacteristicGroupData
-
-            }
 
 
-        println("$TAG: Overall characteristics found: $mGattCharacteristics")
+    private fun setNotifyCharacteristic(){
+        val uuid = Constants.BLE_DEVICE_CHARACTERISTIC_UUID
+        val chara:BluetoothGattCharacteristic? = BluetoothDeviceListHelper.getCharacteristicsFormUUID(uuid)
+        if(chara != null){
+            bluetoothService = BluetoothDeviceListHelper.getBleServiceClass()
+            bluetoothService?.setCharacteristicNotification(chara,true)
+        }
+    }
 
+    private fun sendData(data:String){
+        val uuid = Constants.BLE_DEVICE_CHARACTERISTIC_UUID
+        val chara:BluetoothGattCharacteristic? = BluetoothDeviceListHelper.getCharacteristicsFormUUID(uuid)
+        if(chara != null) {
+            bluetoothService = BluetoothDeviceListHelper.getBleServiceClass()
+            bluetoothService?.writeCharacteristic(chara, data.toByteArray())
+        }
+    }
+
+
+    private fun readCharacteristics(){
+        val uuid = Constants.BLE_DEVICE_CHARACTERISTIC_UUID
+        val chara:BluetoothGattCharacteristic? = BluetoothDeviceListHelper.getCharacteristicsFormUUID(uuid)
+        if(chara != null){
+            bluetoothService = BluetoothDeviceListHelper.getBleServiceClass()
+            bluetoothService?.readCharacteristic(chara)
+        }
     }
 
 
@@ -286,10 +237,8 @@ class BleFragment : Fragment(), OnClickListener{
 
     override fun onResume() {
         super.onResume()
-        println("$TAG: Resume started")
+        println("$TAG: Resume started...")
         initRegisterReciever()
-        //connectToGattServer()
-
     }
 
     override fun onPause() {
@@ -300,45 +249,6 @@ class BleFragment : Fragment(), OnClickListener{
 
 
 
-    private var pHandler = Handler(Looper.myLooper()!!){
-        when(it.what){
-            Constants.MESSAGE_READ ->{
-
-            }
-            Constants.MESSAGE_WRITE ->{
-                println("Written happened, ${it.obj}")
-            }
-            Constants.MESSAGE_DEVICE_NAME->{
-
-            }
-            Constants.MESSAGE_TOAST ->{
-
-                if (null != activity) {
-                    Toast.makeText(activity, it.getData().getString(Constants.MSG_KEY),
-                        Toast.LENGTH_SHORT).show();
-                }
-            }
-            Constants.CONNECTION_STOP ->{
-                updateStartBtn()
-                updateDeviceInfo()
-                Toast.makeText(activity,
-                    "Device is Disconnected",
-                    Toast.LENGTH_SHORT).show();
-            }
-            Constants.CONNECTION_ERROR ->{
-                updateStartBtn()
-                println("Connection error occurred..${it.obj}")
-            }
-            Constants.CONNECT->{
-                updateStartBtn()
-                updateDeviceInfo()
-                Toast.makeText(activity,
-                    "Device is Ready for Communication",
-                    Toast.LENGTH_SHORT).show();
-            }
-        }
-        return@Handler true
-    }
 
     private fun updateDeviceInfo() {
         val device = BluetoothDeviceListHelper.selectedDeviceInfo
@@ -354,7 +264,7 @@ class BleFragment : Fragment(), OnClickListener{
     }
 
     private fun updateStartBtn() {
-        if(isDeviceConnected){
+        if(BluetoothDeviceListHelper.isBleDeviceConnected()){
             bleViewModel.startBtn.value= true
         }
         else{
@@ -365,42 +275,57 @@ class BleFragment : Fragment(), OnClickListener{
 
     override fun onClick(v: View?) {
         if(v?.id == binding.bleStartBtn.id){
-            if(isDeviceConnected){
+            if(BluetoothDeviceListHelper.isBleDeviceConnected()){
                 showDialogForStopDataTransfer("Device Connection","Do you want to close it ...?")
             }else{
                 connectToGattServer()
             }
 
         }
-//        else if(v?.id == binding.fBtnAcc.id){
-//            sendData("+1")
-//        }
-//        else if(v?.id == binding.fBtnDeAcc.id){
-//            sendData("-1")
-//        }
-//        else if(v?.id == binding.fBtnLeft.id){
-//            sendData("-1")
-//        }
-//        else if(v?.id == binding.fBtnRight.id){
-//            sendData("+1")
-//        }
+        else if(v?.id == binding.actionBleFrontBtn.id){
+            
+            sendData("f:+1")
+        }
+        else if(v?.id == binding.actionBleBackBtn.id){
+            sendData("b:+1")
+        }
+        else if(v?.id == binding.actionBleLeftBtn.id){
+            sendData("l:+1")
+        }
+        else if(v?.id == binding.actionBleRightBtn.id){
+            sendData("r:+1")
+        }
+
+        else if(v?.id == binding.bleEditUuid.id){
+            openBottomSheet()
+        }
+    }
+
+
+    private fun openBottomSheet(){
+        val modal = BleUpdateUuid(mContext!!)
+        activity?.supportFragmentManager.let { modal.show(it!!, BleUpdateUuid.TAG) }
     }
 
     private fun initBtnOnClick(){
         val startBtn : ImageButton = binding.bleStartBtn
         startBtn.setOnClickListener(this)
 
-//        val accBtn: FloatingActionButton = binding.fBtnAcc
-//        accBtn.setOnClickListener(this)
-//
-//        val decAccBtn: FloatingActionButton = binding.fBtnDeAcc
-//        decAccBtn.setOnClickListener(this)
-//
-//        val leftBtn: FloatingActionButton = binding.fBtnLeft
-//        leftBtn.setOnClickListener(this)
-//
-//        val rightBtn: FloatingActionButton = binding.fBtnRight
-//        rightBtn.setOnClickListener(this)
+        val frontBtn: FloatingActionButton = binding.actionBleFrontBtn
+        frontBtn.setOnClickListener(this)
+
+        val backBtn: FloatingActionButton = binding.actionBleBackBtn
+        backBtn.setOnClickListener(this)
+
+        val leftBtn: FloatingActionButton = binding.actionBleLeftBtn
+        leftBtn.setOnClickListener(this)
+
+        val rightBtn: FloatingActionButton = binding.actionBleRightBtn
+        rightBtn.setOnClickListener(this)
+
+        val editBtn:ImageButton = binding.bleEditUuid
+        editBtn.setOnClickListener(this)
+
 
     }
 
@@ -409,7 +334,7 @@ class BleFragment : Fragment(), OnClickListener{
              val builder: AlertDialog.Builder = AlertDialog.Builder(mContext!!)
              builder.setTitle(title)
                  .setMessage(message)
-                 .setPositiveButton(android.R.string.ok) { _, _ ->
+                 .setPositiveButton("disconnect") { _, _ ->
                      disconnectGattServer()
                      updateStartBtn()
                  }.setNegativeButton(android.R.string.cancel){_,_ ->
@@ -429,6 +354,79 @@ class BleFragment : Fragment(), OnClickListener{
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+        bluetoothService = BluetoothDeviceListHelper.getBleServiceClass()
+        bluetoothService?.disConnect()
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+ private var mGattCharacteristics:MutableList<BluetoothGattCharacteristic> = mutableListOf()
+   private var isDeviceConnected:Boolean = false
+ displayGattServices(bluetoothService?.getSupportedGattServices())
+
+private fun displayGattServices(gattServices: List<BluetoothGattService?>?) {
+            if (gattServices == null) return
+            var uuid: String?
+            //val unknownServiceString: String = resources.getString(R.string.unknown_service)
+            //val unknownCharaString: String = resources.getString(R.string.unknown_characteristic)
+            val gattServiceData: MutableList<HashMap<String, String>> = mutableListOf()
+            val gattCharacteristicData: MutableList<ArrayList<HashMap<String, String>>> =
+                mutableListOf()
+            mGattCharacteristics = mutableListOf()
+
+            // Loops through available GATT Services.
+            gattServices.forEach { gattService ->
+                val currentServiceData = HashMap<String, String>()
+                uuid = gattService?.uuid.toString()
+
+                println("UUID of service: $uuid")
+
+                currentServiceData["NAME"] = Constants.getServiceAttr()["name"]!!
+                currentServiceData["UUID"] = uuid!!
+                gattServiceData += currentServiceData
+
+                val gattCharacteristicGroupData: ArrayList<HashMap<String, String>> = arrayListOf()
+                val gattCharacteristics = gattService?.characteristics
+                val charas: MutableList<BluetoothGattCharacteristic> = mutableListOf()
+
+                // Loops through available Characteristics.
+                gattCharacteristics?.forEach { gattCharacteristic ->
+
+                    charas += gattCharacteristic
+                    val currentCharaData: HashMap<String, String> = hashMapOf()
+                    uuid = gattCharacteristic.uuid.toString()
+
+                    println("UUID of Characteristic: $uuid ")
+                    println("WriteType of chara: ${gattCharacteristic.writeType}\n")
+                    println("Descriptors: ${gattCharacteristic.getDescriptor(gattCharacteristic.uuid)}")
+                    println("Descriptors list: \n${gattCharacteristic.descriptors.forEach { println("Descriptor uuid: ${it.uuid}\n") }}")
+
+                    currentCharaData["NAME"] = Constants.getServiceAttr()["charas"]!!
+                    currentCharaData["UUID"] = uuid!!
+                    gattCharacteristicGroupData += currentCharaData
+                }
+                mGattCharacteristics += charas
+                gattCharacteristicData += gattCharacteristicGroupData
+
+            }
+
+
+        //println("$TAG: Overall characteristics found: $mGattCharacteristics")
+
+    }
+
+*/

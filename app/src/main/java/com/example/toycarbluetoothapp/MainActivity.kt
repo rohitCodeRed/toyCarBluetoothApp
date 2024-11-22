@@ -5,11 +5,15 @@ import android.Manifest
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -26,6 +30,7 @@ import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
+import com.example.toycarbluetoothapp.bluetooth.BLeDeviceServices
 import com.example.toycarbluetoothapp.bluetooth.BlClassicConnectAsClientSocketThread
 import com.example.toycarbluetoothapp.bluetooth.BluetoothStatusReceiver
 import com.example.toycarbluetoothapp.bluetooth.BluetoothDeviceListHelper
@@ -76,6 +81,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         initBackPressedAction()
 
         initSocketForClassicDevice()
+
+        initServiceForBleDevice()
 
         initBluetoothInstances()
 
@@ -319,6 +326,25 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private fun initSocketForClassicDevice(){
         socketCreationClass = BlClassicConnectAsClientSocketThread()
         BluetoothDeviceListHelper.setSocketCreateClass(socketCreationClass)
+    }
+    private fun initServiceForBleDevice() {
+        val gattServiceIntent = Intent(this, BLeDeviceServices::class.java)
+        bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE)
+    }
+
+    private val serviceConnection: ServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(
+            componentName: ComponentName,
+            service: IBinder
+        ) {
+            println("$TAG: Binding happen successfully....\n")
+            BluetoothDeviceListHelper.setBleServiceClass((service as BLeDeviceServices.LocalBinder).getService())
+        }
+
+        override fun onServiceDisconnected(componentName: ComponentName) {
+            println("$TAG: Binding disconnected.....")
+            BluetoothDeviceListHelper.setBleServiceClass(null)
+        }
     }
 
 

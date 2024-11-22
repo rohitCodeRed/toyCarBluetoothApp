@@ -10,7 +10,7 @@ import java.io.OutputStream
 
 
 class BluetoothDataTransferThread () {
-
+    private val TAG:String="BluetoothDataTransferThread"
     private  var thread: ConnectThread? = null
 
     fun setThread(mmSocket: BluetoothSocket,mHandler: Handler) {
@@ -54,12 +54,14 @@ class BluetoothDataTransferThread () {
     }
 
     private inner class ConnectThread(pSocket: BluetoothSocket,pHandler:Handler): Thread() {
-        val TAG:String="Connected thread"
+
         private val mmSocket :BluetoothSocket = pSocket
         private val mmInStream: InputStream = mmSocket.inputStream
         private val mmOutStream: OutputStream = mmSocket.outputStream
-        private val mmBuffer: ByteArray = ByteArray(1024)
+        private var mmBuffer: ByteArray = ByteArray(13)
+        private var mmBuffer1: ByteArray = ByteArray(13)
         private val mHandler:Handler = pHandler
+        private var messageRecieved:Boolean = false
 
         override fun run() {
             var numBytes: Int // bytes returned from read()
@@ -68,20 +70,37 @@ class BluetoothDataTransferThread () {
             // Keep listening to the InputStream until an exception occurs.
             while (true) {
                 // Read from the InputStream.
-                numBytes = try {
-                    mmInStream.read(mmBuffer)
-                } catch (e: IOException) {
+                try {
+                    var sChar:Char = mmInStream.read().toChar()
+                    println("Reading character: $sChar")
+                    if(sChar =='s'){
+                        for(num in 0..<mmBuffer.count()){
+                            var eChar:Char = mmInStream.read().toChar()
+                            println("storing message: $eChar")
+
+                            if(eChar == 'e'){
+                                messageRecieved = true;
+                                break
+                            }
+
+                            mmBuffer[num] = eChar.code.toByte()
+                        }
+                    }
+                }catch(e:IOException){
                     Log.d(TAG, "Input stream is disconnected", e)
                     mHandler.obtainMessage(
                         Constants.CONNECTION_ERROR,e.localizedMessage).sendToTarget()
                     break
                 }
 
-                // Send the obtained bytes to the UI activity.
-                val readMsg = mHandler.obtainMessage(
-                    Constants.MESSAGE_READ, numBytes, -1,
-                    mmBuffer.toString(Charsets.UTF_8))
-                readMsg.sendToTarget()
+                if(messageRecieved){
+                    val readMsg = mHandler.obtainMessage(
+                        Constants.MESSAGE_READ, mmBuffer.count(), -1,
+                        mmBuffer.toString(Charsets.UTF_8))
+                    readMsg.sendToTarget()
+
+                    messageRecieved = false;
+                }
             }
         }
 
@@ -92,14 +111,6 @@ class BluetoothDataTransferThread () {
                 Log.e(TAG, "Error occurred when sending data", e)
                 mHandler.obtainMessage(
                     Constants.CONNECTION_ERROR,e.localizedMessage).sendToTarget()
-
-                // Send a failure message back to the activity.
-//                val writeErrorMsg:Message = mHandler.obtainMessage(Constants.MESSAGE_TOAST)
-//                val bundle = Bundle().apply {
-//                    putString("Toast", "Couldn't send data to the other device")
-//                }
-//                writeErrorMsg.data = bundle
-//                mHandler.sendMessage(writeErrorMsg)
                 return
             }
 

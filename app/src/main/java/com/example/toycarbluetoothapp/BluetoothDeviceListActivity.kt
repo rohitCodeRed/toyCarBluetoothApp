@@ -35,7 +35,7 @@ class BluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityBluetoothDeviceListBinding
 
-    private val TAG = "AllBluetoothDeviceListActivity"
+    private val TAG = "BluetoothDeviceListActivity"
     //private lateinit var binding:
     private  var bluetoothAdapter: BluetoothAdapter? = null
     private  var bluetoothLeScanner: BluetoothLeScanner? = null
@@ -249,12 +249,14 @@ class BluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
             val name = v.findViewById<TextView>(R.id.device_name).text
             val mac_addr = v.findViewById<TextView>(R.id.mac_addr).text
 
+
             val device = BluetoothDeviceListHelper.getDeviceByAddress(mac_addr.toString())
             if(device != null){
                 if(device.isSelected){
                     showDialogForSocketDisConnect("Ble Device","Do you want to de select the device : ${name}..?",device)
                 }else{
-                    selectDevice(device)
+                    //selectDevice(device,null)
+                    dialogForTypeOfDevice(device)
                 }
             }else{
                 Toast.makeText(this, "Device is dummy...", Toast.LENGTH_SHORT).show();
@@ -263,10 +265,10 @@ class BluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
         }
     }
 
-    private fun selectDevice(d: BluetoothDeviceInfo) {
-        BluetoothDeviceListHelper.selectDevice(d)
-        updateDeviceListView()
-        Toast.makeText(this, "Device: ${d.name} is selected...", Toast.LENGTH_SHORT).show()
+    private fun selectDevice(d: BluetoothDeviceInfo,type:String?) {
+            BluetoothDeviceListHelper.selectDevice(d,type)
+            updateDeviceListView()
+            Toast.makeText(this, "Device: ${d.name} is selected...", Toast.LENGTH_SHORT).show()
     }
 
     private fun updateDeviceListView() {
@@ -301,13 +303,43 @@ class BluetoothDeviceListActivity : AppCompatActivity(), OnClickListener {
         val builder: AlertDialog.Builder = AlertDialog.Builder(this)
         builder.setTitle(title)
             .setMessage(message)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
+            .setPositiveButton("deselect") { _, _ ->
                 deSelectDevice(d)
             }.setNegativeButton(android.R.string.cancel){_,_ ->
 
             }
 
         builder.create().show()
+
+    }
+
+    private fun dialogForTypeOfDevice(d: BluetoothDeviceInfo?){
+        var selectedType:String? =""
+        val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+        builder
+            .setTitle("Select Device as")
+            .setPositiveButton("ok") { dialog, which ->
+
+                selectDevice(d!!,selectedType)
+            }
+            .setNegativeButton("cancel") { dialog, which ->
+                // Do something else.
+            }
+            .setSingleChoiceItems(
+                arrayOf("Classic Device", "Ble Device"),-1
+            ) { dialog, which ->
+                when(which){
+                    0->{
+                        selectedType = "Classic"
+                    }
+                    1->{
+                        selectedType= "Ble"
+                    }
+                }
+            }
+
+        val dialog: AlertDialog = builder.create()
+        dialog.show()
 
     }
 

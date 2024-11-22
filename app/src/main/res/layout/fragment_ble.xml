@@ -179,5 +179,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageButton
+        android:id="@+id/ble_edit_uuid"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="@drawable/round_edit_btn"
+        android:src="@android:drawable/ic_menu_edit"
+        app:layout_constraintStart_toEndOf="@+id/ble_deviceName"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

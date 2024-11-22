@@ -154,7 +154,8 @@
         android:id="@+id/text_unit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Speed km/h"
+        android:text="Direction is Forward...!!"
+        android:textStyle="bold"
         app:layout_constraintBottom_toTopOf="@+id/text_rpm_value"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"
@@ -192,5 +193,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/f_btn_left"
         app:layout_constraintVertical_bias="0.257" />
+
+    <ImageButton
+        android:id="@+id/edit_classic_uuid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/round_edit_btn"
+        android:src="@android:drawable/ic_menu_edit"
+        app:layout_constraintStart_toEndOf="@+id/text_deviceName"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

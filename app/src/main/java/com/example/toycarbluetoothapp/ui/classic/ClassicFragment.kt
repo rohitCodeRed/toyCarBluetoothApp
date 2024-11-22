@@ -23,26 +23,25 @@ import com.example.toycarbluetoothapp.bluetooth.BlClassicConnectAsClientSocketTh
 import com.example.toycarbluetoothapp.bluetooth.BluetoothDataTransferThread
 import com.example.toycarbluetoothapp.bluetooth.BluetoothDeviceListHelper
 import com.example.toycarbluetoothapp.databinding.FragmentClassicBinding
+import com.example.toycarbluetoothapp.ui.bottomsheet.BleUpdateUuid
+import com.example.toycarbluetoothapp.ui.bottomsheet.ClassicUpdateUuid
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.util.UUID
 
 
 class ClassicFragment : Fragment(), OnClickListener{
 
+    val TAG:String="ClassicFragment"
     private var _binding: FragmentClassicBinding? = null
 
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-
     lateinit var classicViewModel: ClassicViewModel
-
     lateinit var  dataTransferClass: BluetoothDataTransferThread
-    private var mContext:Context? =null
-
+    private var mContext:Context? = null
     private var  socketCreationClass: BlClassicConnectAsClientSocketThread? = null
     private  var bluetoothAdapter: BluetoothAdapter? = null
-
     private var isConnecting:Boolean = false
 
 
@@ -125,15 +124,18 @@ class ClassicFragment : Fragment(), OnClickListener{
             obstacleBtn.isChecked = it
         }
 
+        val messageView: TextView = binding.textUnit;
+        classicViewModel.messageUnit.observe(viewLifecycleOwner) {
+            messageView.text = it
+        }
+
         val startBtn: ImageButton = binding.imgBtnStart;
         classicViewModel.startBtn.observe(viewLifecycleOwner) {
             if(it){
-                //binding.imgBtnStart.tag="ON"
                 startBtn.setImageResource(R.drawable.state_start_img)
                 startBtn.setBackgroundResource(R.drawable.round_start_btn)
             }
             else{
-                //binding.imgBtnStart.tag="OFF"
                 startBtn.setImageResource(R.drawable.state_stop_img)
                 startBtn.setBackgroundResource(R.drawable.round_stop_btn)
             }
@@ -148,7 +150,7 @@ class ClassicFragment : Fragment(), OnClickListener{
                 updateDynamicTextView(it.obj.toString())
             }
             Constants.MESSAGE_WRITE ->{
-                println("Written happened, ${it.obj}")
+                println("$TAG: Written happened, ${it.obj}")
             }
 //            Constants.MESSAGE_TOAST ->{
 //
@@ -173,20 +175,20 @@ class ClassicFragment : Fragment(), OnClickListener{
             }
             Constants.CONNECTION_STOP ->{
                 updateStartBtn()
-                //updateDeviceInfo()
-                //BlClassicDeviceServices.disconnectClientSocket()
                 Toast.makeText(activity,
                     "Device is Disconnected...",
                     Toast.LENGTH_SHORT).show();
                 isConnecting = false
+
             }
             Constants.CONNECT->{
                 updateStartBtn()
-                //updateDeviceInfo()
                 Toast.makeText(activity,
                     "Device is Ready for Communication",
                     Toast.LENGTH_SHORT).show();
                 isConnecting = false
+                sendData("s");
+
             }
         }
         return@Handler true
@@ -208,20 +210,34 @@ class ClassicFragment : Fragment(), OnClickListener{
 
 
      private fun updateDynamicTextView(m:String) {
-         println("Incomming string $m")
-         var formatedText = m.replace("\n","").replace("\r","").replace(" ","").replace("?","")
+         println("$TAG: Incomming string $m")
+         val formatedText = m.replace(" ","").replace("\n","").replace("\r","")
 
-         println("formated string $formatedText")
-         var splitedString = formatedText.split(":")
-         println("splited string $splitedString")
 
-         if(splitedString.count() == 3){
-             classicViewModel.recieveSpeed.value = "${splitedString[0]} : ${splitedString[1]}"
-             classicViewModel.r_btn_obstacle.value = splitedString[2].contains("t")
-         }
-         else{
-             classicViewModel.recieveSpeed.value = "00 : 00"
-             classicViewModel.r_btn_obstacle.value = false
+         //Split string by :
+         val splitColon = formatedText.split(":")
+         println("$TAG: Split by colon: $splitColon")
+
+         if(splitColon.count() >= 4){
+             if(splitColon[0] != "" && splitColon[1] != ""){
+                 if(splitColon[0].toIntOrNull() != null && splitColon[1].toIntOrNull() != null) {
+                     classicViewModel.recieveSpeed.value = "${splitColon[0]} : ${splitColon[1]}"
+                 }
+             }
+
+             if(splitColon[3].contains("r")){
+                 classicViewModel.messageUnit.value = "Direction is Reversed...!!"
+             }else {
+                 classicViewModel.messageUnit.value = "Direction is Forward...!!"
+             }
+
+
+             if(splitColon[2].contains("t")){
+                 classicViewModel.r_btn_obstacle.value = true
+                 classicViewModel.messageUnit.value = "Obstacle Ahead...!!"
+             }else {
+                 classicViewModel.r_btn_obstacle.value = false
+             }
          }
      }
 
@@ -241,6 +257,12 @@ class ClassicFragment : Fragment(), OnClickListener{
 
         val rightBtn:FloatingActionButton = binding.fBtnRight
         rightBtn.setOnClickListener(this)
+
+         val brakeBtn:FloatingActionButton = binding.actionBreakBtn
+         brakeBtn.setOnClickListener(this);
+
+         val editBtn:ImageButton = binding.editClassicUuid
+         editBtn.setOnClickListener(this)
 
     }
 
@@ -265,17 +287,26 @@ class ClassicFragment : Fragment(), OnClickListener{
 
             }
             else if(v?.id == binding.fBtnAcc.id){
-                sendData("+1")
+                sendData("a")
             }
             else if(v?.id == binding.fBtnDeAcc.id){
-                sendData("-1")
+                sendData("d")
             }
             else if(v?.id == binding.fBtnLeft.id){
-                sendData("-1")
+                sendData("l")
             }
             else if(v?.id == binding.fBtnRight.id){
-                sendData("+1")
+                sendData("r")
+            }else if(v?.id == binding.actionBreakBtn.id){
+                sendData("b")
             }
+            else if(v?.id == binding.editClassicUuid.id){
+                openBottomSheet()
+            }
+    }
+    private fun openBottomSheet(){
+        val modal = ClassicUpdateUuid(mContext!!)
+        activity?.supportFragmentManager.let { modal.show(it!!, ClassicUpdateUuid.TAG) }
     }
 
 
@@ -309,7 +340,7 @@ class ClassicFragment : Fragment(), OnClickListener{
              val builder: AlertDialog.Builder = AlertDialog.Builder(mContext!!)
              builder.setTitle(title)
                  .setMessage(message)
-                 .setPositiveButton(android.R.string.ok) { _, _ ->
+                 .setPositiveButton("disconnect") { _, _ ->
                      stopConnection()
                  }.setNegativeButton(android.R.string.cancel){_,_ ->
 
@@ -361,6 +392,8 @@ class ClassicFragment : Fragment(), OnClickListener{
     }
 
     private fun stopConnection(){
+        sendData("b");
+
         dataTransferClass.cancelThread()
         socketCreationClass?.cancelThread()
     }

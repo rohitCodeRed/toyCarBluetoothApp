@@ -15,6 +15,8 @@ object Constants {
     val MSG_KEY:String ="Toast"
     val MESSAGE_DEVICE_NAME:Int = 4
 
+    val INVALID_UUID:Int = 12
+
     // Key names received from the BluetoothChatService Handler
     val PERMISSION_HANDLER:Int = 4
     val BL_HANDLER:Int = 5
@@ -23,7 +25,7 @@ object Constants {
     val ONE_DEVICE:Int = 0
     val WHOLE_DEVICE_LIST:Int = 1
 
-    val CLIENT_UUID:String="00001101-0000-1000-8000-00805F9B34FB"
+    var CLIENT_UUID:String="00001101-0000-1000-8000-00805F9B34FB"
     //val CLIENT_UUID:String=(0xFFE0).toString()
 
     val CLIENT_SOCKET:Int = 7
@@ -63,10 +65,28 @@ object Constants {
         return s1
     }
 
-    val CCC_UUID:String = "00002902-0000-1000-8000-00805f9b34fb"
 
+
+    val wtiteType:Int = WRITE_TYPE_NO_RESPONSE
+
+    var BLE_DEVICE_SERVICE_UUID:String = "0000ffe0-0000-1000-8000-00805f9b34fb"
+    var BLE_DEVICE_DESCRIPTOR_UUID_1:String = "00002901-0000-1000-8000-00805f9b34fb"
     val POSSIBLE_WRITE_TYPES:Array<Int> = arrayOf(WRITE_TYPE_DEFAULT,WRITE_TYPE_NO_RESPONSE,WRITE_TYPE_SIGNED)
 
 
+
+    var BLE_DEVICE_CHARACTERISTIC_UUID:String = "0000ffe1-0000-1000-8000-00805f9b34fb"
+    var BLE_DEVICE_DESCRIPTOR_UUID:String = "00002902-0000-1000-8000-00805f9b34fb"
+    var DATA_KEY:String = "characteristicsData"
+
+    fun updateBleUuids(s:String,c:String,d:String){
+        BLE_DEVICE_SERVICE_UUID = s
+        BLE_DEVICE_CHARACTERISTIC_UUID = c
+        BLE_DEVICE_DESCRIPTOR_UUID = d
+    }
+
+    fun updateClassicUuid(c:String){
+        CLIENT_UUID = c
+    }
 
 }
